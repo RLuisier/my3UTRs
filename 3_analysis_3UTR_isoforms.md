@@ -45,7 +45,10 @@ done
 
 ```
 
-3. Collect coverage
+3. Collect coverage and identify reliably expressed 3' UTR isoforms
+Described in file [import_coverage.R](./scripts/import_coverage.R). The outputs are both a gtf file of the reliably expressed 3' UTR isoforms (confident set of newly annotated 3' UTR isoforms together with Ensembl 3' UTR isoforms) and the expression matrix of those.
+
+
 
 ```R
 covdir               <- "./Coverage/utrCov/500/"

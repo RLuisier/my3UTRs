@@ -46,4 +46,4 @@ Outputs saved in RData objects that can be found in ./utrid/APA.
  
   3.1 Identify PAS along longest 3' UTR expressed fragment as described in [identify_PAS.md](./identify_PAS.md). The output is stored in [myPAS.gtf](./annotation/myPAS.gtf).
   
-  3.2 Filter 3' UTR isoforms as described in [FilterUTR.R](./scripts/FilterUTR.R) to remove close neighbours and those overlapping with repeated regions.
+  3.2 Filter 3' UTR isoforms as described in [FilterUTR.R](./scripts/FilterUTR.R) to remove close neighbours and those overlapping with repeated regions. The output is stored in [L2.gtf](./utrid/APA/L2.gtf).
