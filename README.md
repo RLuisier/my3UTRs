@@ -1,5 +1,11 @@
 # my3UTR
-This repository contains all scripts related to the manuscript [3′UTR cleavage of transcripts localized in axons of sympathetic neurons](https://www.biorxiv.org/content/10.1101/170100v2) which includes the custom pipeline that re-annotates and quantifies 3' end alternative transcripts using RNA-seq data.
+This repository contains all scripts related to the manuscript [3′UTR cleavage of transcripts localized in axons of sympathetic neurons](https://www.biorxiv.org/content/10.1101/170100v2) which includes the custom pipeline that re-annotates and quantifies 3' end alternative transcripts using RNA-seq data together with down-stream analysis. It is organised as follows:
+
+### A. Bioinformatic pipeline to identify alternative 3' ends from 3'end-seq data
+This comprises both the identification of the longest 3' UTR expressed per Ensembl transcript ID as described in file [1_identify_gross_fragments.md](./1_identify_gross_fragments.md), as well as the identification of alternative 3' end as described in file [2_identify_APA.md](./2_identify_APA.md). The output ([L2.gtf](./utrid/APA/L2.gtf)) is a gtf file of alternative 3' UTR isoforms as identified by the pipeline.
+
+### B. Downstream analysis of 3' UTR isoform expression in cell body and distal axons
+The down-stream analysis includes 1) the quantification of the expression of each alternative 3' UTR isoform in each of the samples, 2) differential 3’UTR isoforms expression analysis; 3) Gene Ontology enrichment analysis.
 
 ## Samples description
 mRNA was obtained in duplicates from either cell body or distal axons of rat sympathetic neurons which distal compartment has been exposed to NGF. In this model system, distal axons are separated from the cell bodies by a 1 mm wide Teflon divider, allowing the isolation of mRNA from distinct cellular compartments. Prior to sequencing, mRNA was subjected to two rounds of linear amplification, which similarly to Poly(A)-Seq
@@ -13,6 +19,10 @@ TopHat2, BEDTools suite,
 
 After trimming and QC with fastqc, the RNA-seq data were aligned to the rat genome Rn5 with TopHat using the following parameters:
 `tophat2 --mate-inner-dist 1 --max-multihits 1 -N 2 -p 8 -G $geneModel --library-type fr-firststrand -o ${out}${data} $genome ${paths}${file1} ${paths}${file2}` where `$geneModel` is the path to the Ensembl Rn5 (v78) gtf annotation file, `$genome` is the path to the indexed rat genome. Since several run of sequencing have been performed, we then merged all BAM files from same samples together using `samtools merge`
+
+### [0_characterise_tx_read_density.md](./characterise_tx_read_density.md)
+This file describes the steps to characterise the 3'--5' end bias in coverage, demonstrating that the data exhibits a similar coverage profile as those from 3'end seq data. 
+
 
 ### [1_identify_gross_fragments.md](./1_identify_gross_fragments.md)
 This files describes the steps to extract the longest expressed 3' UTR in each samples, starting from the Ensembl 3' en annotation v78 (Rn4) using a combinations of Bash, Python and R scripts.
