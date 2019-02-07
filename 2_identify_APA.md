@@ -3,7 +3,7 @@
 
 1. Extract coverage along longest 3'UTR fragment using [extractCovGrossSegments.R](./scripts/extractCovGrossSegments.R)
 
-```
+```bash
 OUTDIR=./Coverage/utrCov/
 GROSSEG=./annotation/rn5/GrossFragments.gtf
 WITHCOR=TRUE
@@ -23,7 +23,7 @@ done
 
 2. Identify APA from coverage profile
 
-```
+```bash
 COVDIR=./Coverage/utrCov/
 OUTDIR=./utrid/APA/
 REGION=./annotation/rn5/GrossFragments.gtf
