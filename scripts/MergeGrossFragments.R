@@ -1,5 +1,3 @@
-/bin/R-3.0.2/bin/R
-
 library(grDevices)
 library(Rsamtools)
 library(IRanges)
