@@ -1,6 +1,6 @@
 1. In BASH get the coverage from all chromosomes
 
-```
+```bash
 OUTDIR=./Coverage/txCoverage/
 ANNOTATION=./annotation/GRanges_comprehensive_transcriptome_rat_24_nov_2015.RData
 awk '{ print $1}' ./annotation/rn5/chrom_oi.txt  | while read myline
