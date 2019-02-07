@@ -12,78 +12,12 @@ library(rtracklayer)
 library(geneplotter)
 require("multtest")
 require("mclust")
-
 rm(list = ls())
 
 
 
+### NESTED FUNCTIONS
 
-#Working on MacBook -- March
-load("~/Desktop/DataAnalysisRiccio/GRanges_comprehensive_transcriptome_v78_rn5_23022014.RData")
-load("~/Desktop/DataAnalysisRiccio/Dec2016/utrid/anno_ngf_stringent/anno_ngf_March_12.RData")#Contain "anno_ngf","ngfGRS"
-myUTR        <- import.gff("~/Desktop/DataAnalysisRiccio/Dec2016/utrid/APA_stringent/Lngf_sub.gtf",format="gtf")
-names(myUTR) <- as.character(myUTR$ID)
-ix1          <- match(names(myUTR),anno_ngf$uniqueID)
-myUTR        <- myUTR[!is.na(ix1),]
-ix1          <- match(names(myUTR),anno_ngf$uniqueID)
-anno_ngf    <- anno_ngf[ix1,]
-
-#Working on iMac/new iMac
-load("~/Desktop/DataAnalsyisRiccio/GRanges_comprehensive_transcriptome_v78_rn5_23022014.RData")
-load("~/Desktop/DataAnalsyisRiccio/Dec2016/utrid/anno_ngf_stringent/anno_ngf_March_12.RData")#Contain "anno_ngf","ngfGRS"
-myUTR        <- import.gff("~/Desktop/DataAnalsyisRiccio/Dec2016/utrid/APA_stringent/Lngf.gtf",format="gtf")#To obtain the number isoforms in figure 1
-myUTR        <- import.gff("~/Desktop/DataAnalsyisRiccio/Dec2016/utrid/APA_stringent/Lngf_sub.gtf",format="gtf")
-names(myUTR) <- as.character(myUTR$ID)
-ix1          <- match(names(myUTR),anno_ngf$uniqueID)
-myUTR        <- myUTR[!is.na(ix1),]
-ix1          <- match(names(myUTR),anno_ngf$uniqueID)
-anno_ngf    <- anno_ngf[ix1,]
-outdir       <-  "~/Desktop/DataAnalsyisRiccio/Dec2016/axonal_remodelling/alternative/"
-
-
-
-myUTR        <- import.gff("~/Desktop/DataAnalsyisRiccio/Dec2016/utrid/APA_stringent/Lngf.gtf",format="gtf")#To obtain the number isoforms in figure 1
-
-#Characterise pipeline in terms of how many new annotated: longer, shorter,...
-no.txID.rn5     <- length(unique(mcols(g3utr)$X.transcript_id.))#22'845 as those for which 3' UTR length was zero were removed
-no.isoforms     <- nrow(anno_ngf)
-is.I0           <- tapply(anno_ngf$isoform,INDEX=anno_ngf$txID,function(Z)return(sum(Z==0)==0))
-no.new.isoform  <- sum(anno_ngf$isoform!=0)#26'468
-no.new.longer   <- sum(anno_ngf$newL-anno_ngf$initL>=30)
-no.new.shorter  <- sum(-anno_ngf$newL+anno_ngf$initL>=30)
-focus.iso       <- c(no.new.isoform,no.new.longer,no.new.shorter)
-
-no.txID.modif   <- sum(tapply(abs(anno_ngf$newL-anno_ngf$initL),INDEX=anno_ngf$txID,function(Z)return(sum(Z>30)>0)))#10219 txID modified
-no.txID.extended<- sum(unlist(lapply((anno_ngf$maxL-anno_ngf$initL)[match(unique(anno_ngf$txID),anno_ngf$txID)],function(Z)return(Z>30))))#7506 txID extended
-no.txID.shortened<- sum(unlist(lapply((anno_ngf$initL-anno_ngf$minL)[match(unique(anno_ngf$txID),anno_ngf$txID)],function(Z)return(Z>30))))#4721 txID shortened
-no.txID.both    <- sum(
-  unlist(lapply((anno_ngf$initL-anno_ngf$minL)[match(unique(anno_ngf$txID),anno_ngf$txID)],function(Z)return(Z>30)))&
-  unlist(lapply((anno_ngf$maxL-anno_ngf$initL)[match(unique(anno_ngf$txID),anno_ngf$txID)],function(Z)return(Z>30))))#2'008 txID extended
-focus.txID       <- c(no.txID.modif,no.txID.extended,no.txID.shortened,no.txID.both)
-
-pdf("~/Desktop/DataAnalysisRiccio/Dec2016/axonal_remodelling/alternative/output.pipeline.pdf")
-par(mfrow=c(1,2))
-mp<-barplot(focus.iso,las=1,frame=F,col="white",ylim=c(0,30000),ylab="# novel 3' UTR isoforms")
-mtext(side=3,line=0,text=focus.iso,at=mp,cex=0.5)
-mp<-barplot(focus.txID,las=1,frame=F,col="white",ylim=c(0,12000),ylab="# Ensembl txID")
-mtext(side=3,line=0,text=focus.txID,at=mp,cex=0.5)
-dev.off()
-
-maxdL.pos        <- (anno_ngf$maxL-anno_ngf$initL)[match(unique(anno_ngf$txID),anno_ngf$txID)]
-maxdL.pos        <- maxdL.pos[maxdL.pos>0]
-maxdL.neg        <- abs(anno_ngf$minL-anno_ngf$initL)[match(unique(anno_ngf$txID),anno_ngf$txID)]
-maxdL.neg        <- maxdL.neg[maxdL.neg>0]
-
-
-t2g                     <- read.csv("~/Desktop/DataAnalysisRiccio/t2g_biomaRt.csv")
-t2g                     <- read.csv("~/Desktop/DataAnalsyisRiccio/t2g_biomaRt.csv")
-t2g                     <- read.csv("/home/rluisier/data/Riccio/Exp_1/t2g_biomaRt.csv")
-txID2GO                 <- tapply(t2g$ensembl_transcript_id,INDEX=t2g$go_id,FUN=function(x)return(x))
-noNodes                 <- 300
-
-#
-# START NESTED FUNCTIONS
-#
 GetOI <- function(mygoID="GO:0006412",sampleGO){
   go.genes    <- genesInTerm(sampleGO, mygoID)[[1]]#To extract all genes related to this term
   sig.genes   <- sigGenes(sampleGO)
@@ -92,7 +26,7 @@ GetOI <- function(mygoID="GO:0006412",sampleGO){
 }
 
 CompareBP <- function(enr1=test1,enr2=test2,PLOT=TRUE,no=10,lab1="remodelled",lab2="transport"){
-
+  
   myterms            <- unique(c(enr1$Term,enr2$Term))
   temp1              <- -log10(enr1[match(myterms,enr1$Term),]$P.DE)
   temp2              <- -log10(enr2[match(myterms,enr2$Term),]$P.DE)
@@ -101,17 +35,17 @@ CompareBP <- function(enr1=test1,enr2=test2,PLOT=TRUE,no=10,lab1="remodelled",la
   temp2[is.na(temp2)]<- 0
   names(temp2)       <- myterms
   out                <- data.frame(term=myterms,val1=temp1,val2=temp2)
-
-
+  
+  
   if(PLOT){
-
+    
     selterms <- unique(c(names(sort(temp1,decreasing=T))[c(1:no)],names(sort(temp2,decreasing=T))[c(1:no)]))
     dat      <- out[match(selterms,out$term),]
     dat      <- dat[sort(dat$val1-dat$val2,decreasing=T,index.return=T)$ix,]
     L        <- nrow(dat)
     val1     <- as.vector(-dat$val1)
     val2     <- as.vector(dat$val2)
-
+    
     par(mar=c(3,10,2,3),cex=0.7)
     plot(c(L+3,0),xlim=c(min(-dat$val1)-10,max(dat$val2)),type = "n",frame=F,yaxt="n",ylab="")
     mp=barplot(height = val1,add = TRUE,axes = FALSE,horiz=T,col="lightsteelblue3")
@@ -125,7 +59,7 @@ CompareBP <- function(enr1=test1,enr2=test2,PLOT=TRUE,no=10,lab1="remodelled",la
 
 
 CompareBP_improved <- function(enr1=enrichLong[[2]][[3]],enr2=enrichShort[[2]][[3]],PLOT=TRUE,no=10,lab1="long",lab2="short",coi="weight0Fisher"){
-
+  
   myterms            <- unique(c(enr1$Term[enr1$Significant>=5&as.numeric(enr1[,match(coi,colnames(enr1))])<=0.05],enr2$Term[enr1$Significant>=5&as.numeric(enr2[,match(coi,colnames(enr2))])<=0.05]))
   temp1              <- -log10(as.numeric(enr1[match(myterms,enr1$Term),match(coi,colnames(enr1))]))
   temp2              <- -log10(as.numeric(enr2[match(myterms,enr2$Term),match(coi,colnames(enr2))]))
@@ -134,16 +68,16 @@ CompareBP_improved <- function(enr1=enrichLong[[2]][[3]],enr2=enrichShort[[2]][[
   temp2[is.na(temp2)]<- 0
   names(temp2)       <- myterms
   out                <- data.frame(term=myterms,val1=temp1,val2=temp2)
-
+  
   if(PLOT){
-
+    
     selterms <- unique(c(names(sort(temp1,decreasing=T))[c(1:no)],names(sort(temp2,decreasing=T))[c(1:no)]))
     dat      <- out[match(selterms,out$term),]
     dat      <- dat[sort(dat$val1-dat$val2,decreasing=T,index.return=T)$ix,]
     L        <- nrow(dat)
     val1     <- as.vector(-dat$val1)
     val2     <- as.vector(dat$val2)
-
+    
     par(mar=c(3,10,2,3),cex=0.7)
     plot(c(L+3,0),xlim=c(min(-dat$val1)-10,max(dat$val2)),type = "n",frame=F,yaxt="n",ylab="")
     mp=barplot(height = val1,add = TRUE,axes = FALSE,horiz=T,col="lightsteelblue3")
@@ -153,7 +87,7 @@ CompareBP_improved <- function(enr1=enrichLong[[2]][[3]],enr2=enrichShort[[2]][[
     legend("top",pch=15,col=c("lightsteelblue3","midnightblue"),bty="n",ncol=2,leg=c(lab1,lab2),cex=0.5)
   }
   colnames(out)      <- c("terms",lab1,lab2)
-
+  
   return(out)
 }
 
@@ -178,15 +112,15 @@ GetEnrich <- function(selection=selRUD[[5]],value=dRUD){
 
 CreateSampleGO <- function(mysel){
   sampleGO               <- list()
-
+  
   geneNames              <- myBG$txID
   myInterestingGenes     <- unique(as.character(subanno$txID)[mysel])
   myInterestingGenes     <- myInterestingGenes[!is.na(myInterestingGenes)]
   geneList               <- factor(as.integer(geneNames %in% myInterestingGenes))
   names(geneList)        <- geneNames
   sampleGO[[1]]         <- new("topGOdata",description = "Simple session", ontology = "BP",allGenes = geneList, geneSel = myInterestingGenes,nodeSize = 10,annot = annFUN.GO2genes,GO2gene=txID2GO)
-
-
+  
+  
   geneNames              <- unique(t2g$ensembl_transcript_id)
   myInterestingGenes     <- unique(as.character(subanno$txID)[mysel])
   myInterestingGenes     <- myInterestingGenes[!is.na(myInterestingGenes)]
@@ -203,7 +137,7 @@ CreateSampleGOList <- function(myInterestingGenes){
   geneList               <- factor(as.integer(geneNames %in% myInterestingGenes))
   names(geneList)        <- geneNames
   sampleGO[[1]]         <- new("topGOdata",description = "Simple session", ontology = "BP",allGenes = geneList, geneSel = myInterestingGenes,nodeSize = 10,annot = annFUN.GO2genes,GO2gene=txID2GO)
-
+  
   geneNames              <- unique(t2g$ensembl_transcript_id)
   geneList               <- factor(as.integer(geneNames %in% myInterestingGenes))
   names(geneList)        <- geneNames
@@ -215,7 +149,7 @@ CreateSampleGOList <- function(myInterestingGenes){
 getEnrich     <- function(mysampleGO=sampleGOdata1){
   resultFisher            <- runTest(mysampleGO, algorithm = "classic", statistic = "fisher")
   resultFisher.weight01   <- runTest(mysampleGO, algorithm = "weight01", statistic = "fisher")
-
+  
   allRes1.1                 <- GenTable(mysampleGO, classicFisher = resultFisher,weight0Fisher=resultFisher.weight01,orderBy = "classicFisher", ranksOf = "classicFisher", topNodes = noNodes)
   allRes1.2                 <- GenTable(mysampleGO, classicFisher = resultFisher, weight0Fisher=resultFisher.weight01,orderBy = "weight0Fisher", ranksOf = "weight0Fisher", topNodes = noNodes)
   return(list(allRes1.1,allRes1.2))
@@ -229,7 +163,7 @@ plotEnrich1 <- function(dat=elim){
   L               <- nrow(dat)
   val1            <- as.vector(-dat$pval.unique)
   val2            <- as.vector(dat$pval.pluri)
-
+  
   par(mar=c(3,10,2,3),cex=0.7)
   plot(c(L+3,0),xlim=c(min(-dat$pval.unique)-10,max(dat$pval.pluri)),type = "n",frame=F,yaxt="n",ylab="")
   mp=barplot(height = val1,add = TRUE,axes = FALSE,horiz=T,col="lightsteelblue3")
@@ -240,21 +174,21 @@ plotEnrich1 <- function(dat=elim){
 }
 
 MyEnrichPlot <- function(dat=wF,mytitle="BP"){
-
+  
   par(mar=c(3,10,2,3),cex=0.7)
   dat                       <- dat[sort(dat[,1]-dat[,2],decreasing=T,index.return=T)$ix,]
   L                         <- nrow(dat)
-
+  
   val1 <- as.vector(-dat[,1])
   val2 <- as.vector(dat[,2])
-
+  
   plot(c(L+10,0),xlim=c(min(-dat[,1])-10,max(dat)),type = "n",frame=F,yaxt="n",ylab="")
   mp=barplot(height = val1,add = TRUE,axes = FALSE,horiz=T,col="lightsteelblue3")
   barplot(height = val2,add = TRUE,axes = FALSE,horiz=T,col="midnightblue")
   text(x=(min(-dat[,1])-5),y=mp,lab=rownames(dat),cex=0.6)
   mtext(side=1,line=2,text="-log10[P-Value]",cex=0.6)
   mtext(side=3,line=0,text=mytitle,cex=0.6)
-
+  
 }
 
 PlotScatterRUD <- function(selS=selShort,selL=selLong){
@@ -275,9 +209,9 @@ PlotScatterRUD <- function(selS=selShort,selL=selLong){
   text(x=8,y=-15,col="midnightblue",labels=paste(length(unique(subGS[selL]))," distal shifts in axons",sep=""),cex=0.7)
   text(x=-8,y=14,col="black",labels=paste("n=",length(unique(subGS))," tandem 3' UTR",sep=""),cex=0.7)
   text(x=-8,y=13,col="black",labels=paste("r=",round(cor(mRUD[,1],mRUD[,2],method="spearman"),digit=2),"(spearman)",sep=""),cex=0.7)
-#  abline(a=0,b=1,lty=2,col="red")
-#  abline(v=0,lty=2,col="red")
-#  abline(h=0,lty=2,col="red")
+  #  abline(a=0,b=1,lty=2,col="red")
+  #  abline(v=0,lty=2,col="red")
+  #  abline(h=0,lty=2,col="red")
 }
 
 # An isoforms is considered to be reliably expressed if in all the samples the probability of it belonging to the non-expressed class is below 0.05 (less than 5% chance to below to the background in both replicates) -- soft threshold
@@ -297,7 +231,7 @@ SelectExpressed <- function(dat=log2(htseq[,1]+1),frac.bg=0.6,frac.fg=0.1){
     Lim.bg           <- qnorm(frac.bg,mean=bimdens$parameters$mean[1],sd=sqrt(bimdens$parameters$variance$sigmasq[1]))
     hx2              <- dnorm(x,mean=bimdens$parameters$mean[2],sd=sqrt(bimdens$parameters$variance$sigmasq[2]))
   }
-
+  
   hx1 <- dnorm(x,mean=bimdens$parameters$mean[1],sd=sqrt(bimdens$parameters$variance$sigmasq[1]))
   hist(dat,breaks=50,col=rgb(0,0,0,alpha=0.2),freq=FALSE,xlab="",ylab="",main="",ylim=c(0,0.4),las=1,xlim=c(0,20))
   lines(x,hx2 , lwd=2, col="blue")
@@ -307,31 +241,58 @@ SelectExpressed <- function(dat=log2(htseq[,1]+1),frac.bg=0.6,frac.fg=0.1){
   return(c(Lim.bg,Lim.fg))
 }
 
-#
-# END NESTED FUNCTIONS
-#
+###
 
 
-#
-# A. FILTERING
-#
+# A. Load data
+load("./annotation/rn5/GRanges_comprehensive_transcriptome_rat_24_nov_2015.RData")
+myUTR        <- import.gff("./annotation/rn5/Lngf.gtf",format="gtf")#To obtain the number isoforms in figure 1
+anno_ngf     <- read.table("./data/anno_ngf.tab",header=T,sep="\t")
 
-# A.1 Remove redundant transcript
-id       <- paste(start(myUTR),end(myUTR),strand(myUTR),sep=".")#674 duplicated
+
+# B. Characterise pipeline in terms of how many new annotated
+no.txID.rn5     <- length(unique(mcols(g3utr)$X.transcript_id.))#22'845 as those for which 3' UTR length was zero were removed
+no.isoforms     <- nrow(anno_ngf)
+is.I0           <- tapply(anno_ngf$isoform,INDEX=anno_ngf$txID,function(Z)return(sum(Z==0)==0))
+no.new.isoform  <- sum(anno_ngf$isoform!=0)#26'468
+no.new.longer   <- sum(anno_ngf$newL-anno_ngf$initL>=30)
+no.new.shorter  <- sum(-anno_ngf$newL+anno_ngf$initL>=30)
+focus.iso       <- c(no.new.isoform,no.new.longer,no.new.shorter)
+
+no.txID.modif   <- sum(tapply(abs(anno_ngf$newL-anno_ngf$initL),INDEX=anno_ngf$txID,function(Z)return(sum(Z>30)>0)))#10219 txID modified
+no.txID.extended<- sum(unlist(lapply((anno_ngf$maxL-anno_ngf$initL)[match(unique(anno_ngf$txID),anno_ngf$txID)],function(Z)return(Z>30))))#7506 txID extended
+no.txID.shortened<- sum(unlist(lapply((anno_ngf$initL-anno_ngf$minL)[match(unique(anno_ngf$txID),anno_ngf$txID)],function(Z)return(Z>30))))#4721 txID shortened
+no.txID.both    <- sum(
+  unlist(lapply((anno_ngf$initL-anno_ngf$minL)[match(unique(anno_ngf$txID),anno_ngf$txID)],function(Z)return(Z>30)))&
+  unlist(lapply((anno_ngf$maxL-anno_ngf$initL)[match(unique(anno_ngf$txID),anno_ngf$txID)],function(Z)return(Z>30))))#2'008 txID extended
+focus.txID       <- c(no.txID.modif,no.txID.extended,no.txID.shortened,no.txID.both)
+
+#Supplementary Figure 2b
+par(mfrow=c(1,2))
+mp<-barplot(focus.iso,las=1,frame=F,col="white",ylim=c(0,30000),ylab="# novel 3' UTR isoforms")
+mtext(side=3,line=0,text=focus.iso,at=mp,cex=0.5)
+mp<-barplot(focus.txID,las=1,frame=F,col="white",ylim=c(0,12000),ylab="# Ensembl txID")
+mtext(side=3,line=0,text=focus.txID,at=mp,cex=0.5)
+
+maxdL.pos        <- (anno_ngf$maxL-anno_ngf$initL)[match(unique(anno_ngf$txID),anno_ngf$txID)]
+maxdL.pos        <- maxdL.pos[maxdL.pos>0]
+maxdL.neg        <- abs(anno_ngf$minL-anno_ngf$initL)[match(unique(anno_ngf$txID),anno_ngf$txID)]
+maxdL.neg        <- maxdL.neg[maxdL.neg>0]
+
+
+# C. Remove redundant transcripts and select reliably expressed genes
+id       <- paste(start(myUTR),end(myUTR),strand(myUTR),sep=".")#2215 duplicated
 myUTR    <- myUTR[-which(duplicated(id)),]
 anno_ngf <- anno_ngf[-which(duplicated(id)),]
 
-pdf(paste(outdir,"select_expressed_genes.pdf",sep=""))
+#Figure S3c
 par(mfrow=c(2,2))
 mydat                <- anno_ngf[which(anno_ngf$is.conservative),match(c("NGF.axon.1.raw","NGF.axon.2.raw","NGF.cb.1.raw","NGF.cb.2.raw"),colnames(anno_ngf))]
 mydatall             <- anno_ngf[,match(c("NGF.axon.1.raw","NGF.axon.2.raw","NGF.cb.1.raw","NGF.cb.2.raw"),colnames(anno_ngf))]
 for(i in c(1:ncol(mydat))){
   mydat[,i] <- log2(mydat[,i]+1)
 }
-
 lims      <- apply(mydat,2,function(Z)2^SelectExpressed(dat=Z,frac.bg=0.95,frac.fg=0.1))
-dev.off()
-
 tempsel   <- apply(mydatall,2,function(Z)return(Z>=mean(lims[1,c(1,2)])))
 soft.sel  <- cbind(tempsel[,1]&tempsel[,2],tempsel[,3]&tempsel[,4])
 tempsel   <- do.call(what=cbind,lapply(c(1:4),function(Z)return(mydatall[,Z]>=lims[2,Z])))
@@ -346,9 +307,7 @@ anno_ngf$NGF.cb.is.expressed.iso            <- final.sel[,2]
 #FG limit adapted to all samples
 #BG limit from axonal samples (better fit)
 
-# A. Characterise the expression in each compartment
-
-#txID.expression -- this cannot be used for counting given that there are duplicates in
+# D. Characterise the expression in each compartment in terms of the numer of expressed transcripts
 axons                                              <- unique(anno_ngf$txID[anno_ngf$NGF.axon.is.expressed.iso])
 cb                                                 <- unique(anno_ngf$txID[anno_ngf$NGF.cb.is.expressed.iso])
 neurons                                            <- union(axons,cb)
@@ -378,20 +337,23 @@ detect.iso.ngf[which(anno_ngf$txID%in%cb.cb)]     <- "cb.cb"
 anno_ngf$detect.iso.ngf                           <- detect.iso.ngf
 
 
-pdf(paste(outdir,"no.genes.expressed_jul_2016.pdf",sep=""))
-
 no.txID <- c(cb=length(unique(anno_ngf$txID[anno_ngf$NGF.cb.is.expressed.iso])),
              axons=length(unique(anno_ngf$txID[anno_ngf$NGF.axon.is.expressed.iso]) ))
 no.iso  <- c(cb=length(unique(anno_ngf$uniqueID[anno_ngf$NGF.cb.is.expressed.iso])),
              axons=length(unique(anno_ngf$uniqueID[anno_ngf$NGF.axon.is.expressed.iso]) ))
 
+#Figure S3d
 mycols   <- c(rgb(23/255,71/255,120/255),rgb(119/255,192/255,68/255))
 par(mfrow=c(1,2))
 mp<- barplot(no.iso,las=1,col=mycols)
 mtext(side=3,line=0,text=no.iso,cex=0.7,at=mp)
 mp<- barplot(no.txID,las=1,col=mycols)
 mtext(side=3,line=0,text=no.txID,cex=0.7,at=mp)
-dev.off()
+
+# E. Characterise the expression in each compartment in terms of the enrichment in GO terms
+t2g                     <- read.csv("./annotation/rn5/t2g_biomaRt.csv")
+txID2GO                 <- tapply(t2g$ensembl_transcript_id,INDEX=t2g$go_id,FUN=function(x)return(x))
+noNodes                 <- 300
 
 myInterestingGenes     <- list(cb=unique(anno_ngf$txID[anno_ngf$NGF.cb.is.expressed.iso]),
                                axons=unique(anno_ngf$txID[anno_ngf$NGF.axon.is.expressed.iso]),
@@ -409,16 +371,20 @@ myenrich            <- lapply(mysampleGO,function(Z){
   allRes                 <- GenTable(Z, weight0Fisher=resultFisher.weight01,orderBy = "weight0Fisher", ranksOf = "weight0Fisher", topNodes = 100)
   return(list(allRes))})
 
+
+outdir <- "./GOenrichment/"
+
 write.csv(myenrich[[1]],paste(outdir,"enrichment_cb.csv",sep=""))
 write.csv(myenrich[[2]],paste(outdir,"enrichment_axons.csv",sep=""))
 write.csv(myenrich[[3]],paste(outdir,"enrichment_neurons.csv",sep=""))
 write.csv(myenrich[[4]],paste(outdir,"enrichment_cb.only.csv",sep=""))
 
+#Filter GO to remove redundant terms
 enr1<- read.csv(paste(outdir,"enrichment_neurons_f.csv",sep=""))
 enr2<- read.csv(paste(outdir,"enrichment_axons_f.csv",sep=""))
 enr3<- read.csv(paste(outdir,"enrichment_cb.only_f.csv",sep=""))
 
-pdf(paste(outdir,"enrichmt_compartmentstringent_jul_2016.pdf",sep=""))
+#Figure S3d
 par(mfrow=c(1,3))
 vec<- -log10(enr1$weight0Fisher)
 names(vec)<- as.character(enr1$Term)
@@ -437,9 +403,9 @@ names(vec)<- as.character(enr2$Term)
 barplot(rev(vec),horiz=T,cex.names=0.6,las=1)
 mtext(side=3,line=0,text="axons and cell body")
 mtext(side=1,line=2,text="-log10(P-Value)")
-dev.off()
 
-# B. Length of the reliably expressed in each compartment
+# F. Characterise the expression in each compartment in terms of the 3' UTR length
+
 Axons.txID <- unique(as.character(anno_ngf$txID)[anno_ngf$NGF.axon.is.expressed.iso])
 CB.txID    <- unique(as.character(anno_ngf$txID)[anno_ngf$NGF.cb.is.expressed.iso])
 Axons.iso  <- unique(as.character(anno_ngf$uniqueID)[anno_ngf$NGF.axon.is.expressed.iso])
@@ -458,7 +424,6 @@ L2 <- list(
 )
 
 
-#In this version I consider all of them
 maxL        <- tapply(anno_ngf$newL[anno_ngf$NGF.axon.is.expressed.iso|anno_ngf$NGF.cb.is.expressed.iso],INDEX=factor(as.character(anno_ngf$txID[anno_ngf$NGF.axon.is.expressed.iso|anno_ngf$NGF.cb.is.expressed.iso])),FUN=max)
 initL       <- tapply(anno_ngf$initL[anno_ngf$NGF.axon.is.expressed.iso|anno_ngf$NGF.cb.is.expressed.iso],INDEX=factor(as.character(anno_ngf$txID[anno_ngf$NGF.axon.is.expressed.iso|anno_ngf$NGF.cb.is.expressed.iso])),FUN=function(X)return(X[1]))
 no.iso      <- tapply(anno_ngf$initL[anno_ngf$NGF.axon.is.expressed.iso|anno_ngf$NGF.cb.is.expressed.iso],INDEX=factor(as.character(anno_ngf$txID[anno_ngf$NGF.axon.is.expressed.iso|anno_ngf$NGF.cb.is.expressed.iso])),FUN=function(X)return(length(X)))
@@ -478,8 +443,7 @@ utrL          <- list(
   axons=maxL[match(L1[[2]],names(maxL))]
 )
 
-
-pdf(paste(outdir,"forfig7_all_loose_july2016.pdf",sep=""))
+#Figures S3e
 par(mfrow=c(2,3),mar=c(3,4,3,3))
 mycols <- c(rgb(254/255,218/255,0),rgb(150/255,150/255,150/255),"black")
 mp<- barplot(unlist(lapply(L1,length)),las=1,col=mycols,frame=F)
@@ -491,6 +455,7 @@ mp<- barplot(unlist(lapply(L2,length)),las=1,col=mycols,frame=F)
 mtext(side=3,line=0,text=unlist(lapply(L2,length)),at=mp,cex=0.5)
 mtext(side=2,line=3,text="no.3' UTR isoforms")
 
+#Figures 2c,d
 barplot(with.multiple*100,col=mycols,las=1,frame=F)
 mtext(side=2,line=3,text="fraction of txID with multiple iso")
 barplot(distr.no.iso*100,beside=T,col=mycols[c(1,2)],las=1,,frame=F)
@@ -498,7 +463,6 @@ mtext(side=2,line=3,text="fraction of txID with multiple iso")
 boxplot(utrL,outline=F,col=c("white",mycols[c(1,2)]),las=1,frame=F)
 mtext(side=3,line=0,text=unlist(lapply(utrL,length)),at=c(1,2,3),cex=0.5)
 
-dev.off()
 
 #Statistical test to to test whether the difference in 3'UTR length is significant
 wilcox.test(utrL[[2]],utrL[[3]], paired=F)$p.value
@@ -557,9 +521,10 @@ test.fitted <-  predict(m1, type = "response")
 confint(m1)
 
 
+
+# G. Alternative 3' UTR usage between the two compartments
 no.genes.expressed.neurons              <- length(unique(anno_ngf$geneSymbol[NGF.axon.is.expressed.iso|NGF.cb.is.expressed.iso]))
 no.genes.expressed.axons                <- length(unique(anno_ngf$geneSymbol[NGF.axon.is.expressed.iso]))
-
 
 #txID.expression
 axons                                   <- unique(anno_ngf$txID[anno_ngf$NGF.axon.is.expressed.iso])
@@ -568,9 +533,6 @@ neurons                                 <- union(axons,cb)
 cb.only                                 <- setdiff(cb,axons)
 axon.only                               <- setdiff(axons,cb)
 both                                    <- intersect(axons,cb)
-
-View(anno_ngf[which(anno_ngf$txID%in%axon.only),match(c("NGF.cb.1.raw","NGF.cb.2.raw","NGF.axon.1.raw","NGF.axon.2.raw"),colnames(anno_ngf))])
-View(anno_ngf[setdiff(which(anno_ngf$uniqueID%in%setdiff(Axons.iso,CB.iso)),which(anno_ngf$txID%in%axon.only)),match(c("NGF.cb.1.raw","NGF.cb.2.raw","NGF.axon.1.raw","NGF.axon.2.raw"),colnames(anno_ngf))])
 
 #uniqueID.expression
 axons                                  <- anno_ngf$uniqueID[anno_ngf$NGF.axon.is.expressed.iso]
@@ -590,24 +552,24 @@ iso.class[anno_ngf$uniqueID%in%cb.cb]     <- "cb.cb"
 iso.class[anno_ngf$uniqueID%in%ax.ax]     <- "ax.ax"
 anno_ngf$iso.class <- iso.class
 
-View(anno_ngf[which(anno_ngf$uniqueID%in%ax.ax),match(c("NGF.cb.1.raw","NGF.cb.2.raw","NGF.axon.1.raw","NGF.axon.2.raw"),colnames(anno_ngf))])
-View(anno_ngf[which(anno_ngf$uniqueID%in%neur.ax),match(c("NGF.cb.1.raw","NGF.cb.2.raw","NGF.axon.1.raw","NGF.axon.2.raw"),colnames(anno_ngf))])
-
 
 #Create Backgroun with what is expressed in neurons
 mytx <- unique(as.character(anno_ngf$txID[anno_ngf$NGF.axon.is.expressed.iso|anno_ngf$NGF.cb.is.expressed.iso]))
 mygs <- unique(as.character(anno_ngf$geneSymbol[anno_ngf$NGF.axon.is.expressed.iso|anno_ngf$NGF.cb.is.expressed.iso]))#12'529
 myBG <- data.frame(txID=mytx,GS=c(mygs,rep(NA,length(mytx)-length(mygs))))
 
-# A.2 Remove those transcript ID which have only one isoforms
+#Remove those transcript ID which have only one isoforms
 anno_ngf     <- anno_ngf[anno_ngf$NGF.axon.is.expressed.iso|NGF.cb.is.expressed.iso,]
 temp         <- as.data.frame(table(as.character(anno_ngf$txID)))
 no.iso       <- temp[match(anno_ngf$txID,as.character(temp[,1])),2]
-anno_ngf     <- anno_ngf[anno_ngf$no.iso>1,]#21377 rows
+anno_ngf     <- anno_ngf[anno_ngf$no.iso>1,]
 names(myUTR) <- myUTR$ID
-myUTR        <- myUTR[match(anno_ngf$uniqueID,names(myUTR)),]#8'884 with only 1 isoforms
+ix           <- match(anno_ngf$uniqueID,names(myUTR))
+myUTR        <- myUTR[ix[!is.na(ix)],]
+anno_ngf     <- anno_ngf[!is.na(ix),]
 
-# A.3 Check that the closest neighbour is not within 300 nt
+
+#Check that the closest neighbour is not within 300 nt
 #iso_ordered
 tempL                     <- anno_ngf$newL
 names(tempL)              <- anno_ngf$uniqueID
@@ -626,15 +588,9 @@ d1                        <- as.numeric(as.character(anno_ngf$newL))[sel]
 d2                        <- as.numeric(as.character(anno_ngf$newL))[match(nextID[sel],anno_ngf$uniqueID)]
 distonext[sel]            <- d2-d1
 #Fproxi
-Fproxi                    <- which(distonext<300)#none; ok what expected
-Fproxi
+Fproxi                    <- which(distonext<300)#should be none
 
-#
-# B. ADD INFORMATION
-#
-
-
-# B.1 Remake ordering and imID
+# Get ordering of the isoforms
 tempL                     <- anno_ngf$newL
 names(tempL)              <- anno_ngf$uniqueID
 tempG                     <- as.factor(as.character(anno_ngf$txID))
@@ -652,7 +608,7 @@ imIDp                     <- as.character(imID1[match(anno_ngf$txID,names(imID1)
 anno_ngf$imIDp            <- imIDp
 
 
-# B.2 Get the selection on which to focus for the analysis
+# Get the selection on which to focus for the analysis
 # At least one of the pair (distal or proximal) must be detected in axons
 sela1                <- (anno_ngf$NGF.axon.is.expressed.iso|anno_ngf$NGF.axon.is.expressed.iso[match(anno_ngf$imIDp,anno_ngf$uniqueID)])
 # At least one of the pair (distal or proximal) must be detected in cb
@@ -666,21 +622,6 @@ sela5                 <- (anno_ngf$NGF.axon.is.expressed.iso|anno_ngf$NGF.cb.is.
 
 sela                  <- sela1&sela2&sela3&sela4&sela5
 subanno               <- anno_ngf[sela,]
-
-length(unique(subanno$geneSymbol))
-
-no.genes.expressed.neurons              <- length(unique(anno_ngf$geneSymbol[anno_ngf$NGF.axon.is.expressed.iso|anno_ngf$NGF.cb.is.expressed.iso]))
-no.genes.expressed.axons                <- length(unique(anno_ngf$geneSymbol[anno_ngf$NGF.axon.is.expressed.iso]))
-no.genes.expressed.axons.multiple.iso   <- length(unique(subanno$geneSymbol))
-my.nos                                  <- c(no.genes.expressed.neurons,no.genes.expressed.axons,no.genes.expressed.axons.multiple.iso)
-names(my.nos)                           <- c("neurons","axons","axons&no.iso>1")
-
-no.genes.expressed.neurons.t              <- length(unique(anno_ngf$txID[anno_ngf$NGF.axon.is.expressed.iso|anno_ngf$NGF.cb.is.expressed.iso]))
-no.genes.expressed.axons.t                <- length(unique(anno_ngf$txID[anno_ngf$NGF.axon.is.expressed.iso]))
-no.genes.expressed.axons.multiple.iso.t   <- length(unique(subanno$txID))
-my.nos.t                                  <- c(no.genes.expressed.neurons.t,no.genes.expressed.axons.t,no.genes.expressed.axons.multiple.iso.t)
-names(my.nos.t)                           <- c("neurons","axons","axons&no.iso>1")
-
 
 #
 # C. IDENTIFICATION OF DIFFERENTIALLY EXPRESSED ISOFORMS
@@ -703,15 +644,12 @@ sdRUD                 <- t(apply(RUD,1,function(x)return(tapply(x,INDEX=factor(c
 mRUD                  <- t(apply(RUD,1,function(x)return(tapply(x,INDEX=factor(c("axon","axon","cb","cb")),FUN=mean))))
 dRUD                  <- mRUD[,2]-mRUD[,1]
 
-pdf(paste(outdir,"comparison_RUD_replicates.pdf",sep=""))
+#Compare replicates
 par(mfrow=c(2,2))
 smoothScatter(RUD[,1],RUD[,2],frame=FALSE,xlab="ax1",ylab="ax2")
 mtext(side=3,line=0,text=cor(RUD[,1],RUD[,2],method="spearman"))
 smoothScatter(RUD[,3],RUD[,4],frame=FALSE,xlab="cb.1",ylab="cb.2")
 mtext(side=3,line=0,text=cor(RUD[,3],RUD[,4],method="spearman"))
-dev.off()
-
-
 
 sumRUD               <- cbind(
   apply(anno_ngf[,match(c("NGF.axon.1.raw","NGF.axon.2.raw","NT3.axon.1.raw","NT3.axon.2.raw"),colnames(anno_ngf))],1,sum),
@@ -730,8 +668,7 @@ test.apa <- function(ix.proximal=ix1[1],ix.distal=ix2[1]){
 }
 fisherRUD   <- unlist(lapply(c(1:nrow(sumRUD)),function(x)return(test.apa(ix.proximal=ix1[x],ix.distal=ix2[x]))))
 
-#my.proximal <- log2(1+sumRUD[ix2,])
-#my.distal   <- log2(1+sumRUD[ix1,])
+
 my.proximal <- sumRUD[ix2,]
 my.distal   <- sumRUD[ix1,]
 rel.proximal.usage <- cbind(my.proximal[,1]/(my.distal[,1]+my.proximal[,1]),
@@ -748,7 +685,6 @@ diff.rel.proximal.usage<- rel.proximal.usage[,2]-rel.proximal.usage[,1]
 padjRUD              <-  p.adjust(fisherRUD,method="fdr")
 mRUD                 <-  as.data.frame(mRUD)
 
-
 # Selection
 id.proxi             <-  anno_ngf$imIDp[match(names(dRUD),anno_ngf$uniqueID)]
 seld1                <-  anno_ngf$NGF.axon.is.expressed.iso[match(id.proxi,anno_ngf$uniqueID)]
@@ -757,7 +693,7 @@ seld2                <-  anno_ngf$NGF.axon.is.expressed.iso[match(names(dRUD),an
 selc                 <- padjRUD<0.01
 
 
-# C.2    Relative Proximal to distal site usage
+#Relative Proximal to distal site usage
 mydat                <- anno_ngf[,match(c("NGF.axon.1.raw","NGF.axon.2.raw","NGF.cb.1.raw","NGF.cb.2.raw"),colnames(anno_ngf))]
 ix.distal            <- c(1:nrow(anno_ngf))
 ix.proximal          <- match(as.character(anno_ngf$imIDp),as.character(anno_ngf$uniqueID))
@@ -831,18 +767,6 @@ View(cbind(subanno[selRUD1[[6]],c("uniqueID","geneSymbol","imIDp","newL")],mPUD[
 write.csv(cbind(subanno[selRUD1[[5]],c("uniqueID","geneSymbol","imIDp","newL")],mPUD[selRUD1[[5]],]),"~/Desktop/DataAnalsyisRiccio/Dec2016/axonal_remodelling/proximal_shifts.csv")
 write.csv(cbind(subanno[selRUD1[[6]],c("uniqueID","geneSymbol","imIDp","newL")],mPUD[selRUD1[[6]],]),"~/Desktop/DataAnalsyisRiccio/Dec2016/axonal_remodelling/distal_shifts.csv")
 
-unlist(lapply(selRUD1,function(Z)return(length(unique(subanno$geneSymbol[Z])))))
-unlist(lapply(selRUD1,function(Z)return(sum(Z))))
-
-#IX=IX+1
-#selRUD1[[IX]]      <- padjRUD<0.01&dRUD<(-1)&seld1&diffPUD>(0.15)&opp.1#131-proximal shift so proximal is expressed in axons
-#IX=IX+1
-#selRUD1[[IX]]      <- padjRUD<0.01&dRUD>(1)&seld2&diffPUD<(-0.15)&opp.2#83-distal shift so distal expressed in axons
-
-#IX=IX+1
-#selRUD1[[IX]]      <- padjRUD<0.01&dRUD<(-1)&seld1&1&diff.rel.proximal.usage<(-0.15)&rel.proximal.usage[,2]<=Lim1&opp.1#78, less that 20% usage of the proximal in CB; therefore can be considered as absent
-#IX=IX+1
-#selRUD1[[IX]]      <- padjRUD<0.01&dRUD>(1)&seld2&diff.rel.proximal.usage>(0.15)&rel.proximal.usage[,2]>=Lim2&opp.2#34,less than 20% usage of the distal in CB; therefore can be considered as absent
 
 my.no <- unlist(lapply(selRUD1,function(Z)return(length(unique(subanno$txID[Z])))))
 
@@ -851,9 +775,6 @@ mp<- barplot(my.no[c(5,6,9,10)],las=1)
 mtext(side=3,line=0,text=my.no[c(5,6,9,10)],at=mp)
 dev.off()
 
-View(cbind(as.character(subanno$GS),diff.rel.proximal.usage,rel.proximal.usage)[selRUD1[[5]],])
-View(cbind(as.character(subanno$GS),diff.rel.proximal.usage,rel.proximal.usage)[selRUD1[[6]],])
-View(cbind(as.character(subanno$GS),diff.rel.proximal.usage,rel.proximal.usage))
 
 
 mylist <- lapply(selRUD1,function(Z)return(unique(subanno$txID[Z])))
@@ -864,15 +785,6 @@ intersect(cand$txID,mylist[[5]])
 View(cbind(as.character(subanno$GS),diff.rel.proximal.usage,rel.proximal.usage)[subanno$txID%in%setdiff(cand$txID,mylist[[9]]),])
 cand <- read.csv("~/Desktop/DataAnalysisRiccio/Riccio_exp1_analysis/candidates_rem.csv")
 
-View(cbind(as.character(subanno$GS),diff.rel.proximal.usage,rel.proximal.usage)[subanno$txID%in%setdiff(cand$txID,mylist[[9]]),])
-
-
-View(subanno[selRUD1[[9]],])
-View(subanno[selRUD1[[10]],])
-
-
-ix <- which(subanno$GS=="Sub1")
-ix <- which(subanno$GS=="Vps36")
 
 
 ix <- which(subanno$txID=="ENSRNOT00000016995")
@@ -1045,60 +957,7 @@ distal.focus             <- list( dist.and.both=intersect(myshifts.txID[[2]],axo
 lapply(proxi.focus,length)#54 of which proximal shift in axons AND only express short AND distal more expressed in CB
 lapply(distal.focus,length)#75 of which distal shift in axons AND only express long AND proximal more in CB
 
-#Check the level of expression of the proximal in CB for those which are not expressed in axons; they are way less expressed
-ix.proxi               <- match(myIDs[,1],rownames(myMean))
-proi                   <- lapply(distal.focus,function(Z)return(anno_ngf$imIDp[match(Z,anno_ngf$txID)]))
-ix.proxi.distal        <- lapply(proi,function(Z)return(match(Z,rownames(myMean))))
-cb.e                   <- list(all=myMean[ix.proxi,2],proxi.expressed=myMean[ix.proxi.distal[[1]],2],proxi.not.expressed=myMean[ix.proxi.distal[[2]],2])
-boxplot(cb.e)
-multidensity(cb.e)
-abline(v=8)
-abline(v=10)
-plot(pch=19,myMean[,c(2,1)],cex=0.3,col=rgb(0,0,0,0.1))
-abline(v=8)
-abline(v=10)
 
-par(mfrow=c(2,2),mar=c(3,4,3,3))
-#layout(matrix(c(1,4,4,2,4,4,3,4,4),4,3,byrow = TRUE))
-mp=barplot(c(distal.and.distalshift=lapply(distal.focus,length)[[2]],prox.only.and.proxi.shift=lapply(proxi.focus,length)[[3]]),col=c(rgb(30/255,36/255,83/255),rgb(154/255,162/255,197/255)),las=1,ylab="# Ensembl txID")
-mtext(side=3,line=0,at=mp,text=c(lapply(distal.focus,length)[[2]],prox.only.and.proxi.shift=lapply(proxi.focus,length)[[3]]))
-
-#Check RUD in CB for those which express either only long or only short with significant distal shift
-comp.RUD         <- list(all.cb=mRUD[,2],all.ax=mRUD[,1],
-                         proxi.and.proxi.cb=mRUD[which(subanno$txID%in%proxi.focus[[3]]),2],proxi.and.proxi.ax=mRUD[which(subanno$txID%in%proxi.focus[[3]]),1],
-                         dist.and.dist.cb=mRUD[which(subanno$txID%in%distal.focus[[2]]),2],dist.and.dist.ax=mRUD[which(subanno$txID%in%distal.focus[[2]]),1]
-)
-
-my.no.txID       <- list(unique(subanno$txID),unique(proxi.focus[[3]]),unique(distal.focus[[2]]))
-comp.utrL        <- lapply(my.no.txID,function(Z)return(anno_ngf$maxL[match(Z,anno_ngf$txID)]))
-
-boxplot(comp.RUD,outline=F,las=1,frame=FALSE,col=c(rgb(22/255,70/255,120/255),rgb(112/255,191/255,68/255)),ylab="log2 proximal-to-distal poly(A) site ratio")
-mtext(side=3,at=c(1.5,3.5,5.5),text=unlist(lapply(my.no.txID,length)))
-legend("topright",col=c(rgb(22/255,70/255,120/255),rgb(112/255,191/255,68/255)),pch=15,bty="n",leg=c("cb","axons"))
-boxplot(comp.utrL,outline=F,las=1,frame=FALSE,col=c("grey",rgb(154/255,162/255,197/255),rgb(30/255,36/255,83/255)),ylab="3' UTR length")
-
-selS <- selRUD1[[3]]
-selL <- selRUD1[[4]]
-mycols             <- rep("grey",nrow(mRUD))
-mycols[selS]       <- rgb(154/255,162/255,197/255)
-mycols[selL]       <- rgb(30/255,36/255,83/255)
-mycols[selS&subanno$txID%in%proxi.focus[[3]]] <- "red"
-mycols[selL&subanno$txID%in%distal.focus[[2]]]<- "red"
-
-
-plot(mRUD[!(selS|selL),c(2,1)],pch=19,col=mycols[!(selS|selL)],cex=0.3,frame=F,las=1,xlab="",ylab="",cex.axis=0.8)
-points(mRUD[selS|selL,c(2,1)],pch=19,col=mycols[(selS|selL)],cex=0.3)
-abline(v=0,lty=2,col="grey")
-mtext(side=1,line=2,text="log2 proximal-to-distal poly(A) site ratio",cex=0.8)
-abline(h=0,lty=2,col="grey")
-mtext(side=2,line=2,text="axonal compartment",cex=0.8)
-mtext(side=2,line=3,text="log2 proximal-to-distal poly(A) site ratio",cex=0.8)
-mtext(side=1,line=3,text="cell body compartment",cex=0.8)
-subGS   <- as.character(subanno$txID)
-text(x=-8,y=15,col="lightsteelblue3",labels=paste(length(unique(subGS[selS]))," proximal shifts in axons",sep=""),cex=0.7)
-text(x=8,y=-15,col="midnightblue",labels=paste(length(unique(subGS[selL]))," distal shifts in axons",sep=""),cex=0.7)
-text(x=-8,y=14,col="black",labels=paste("n=",length(unique(subGS))," tandem 3' UTR",sep=""),cex=0.7)
-text(x=-8,y=13,col="black",labels=paste("r=",round(cor(mRUD[,1],mRUD[,2],method="spearman"),digit=2),"(spearman)",sep=""),cex=0.7)
 
 #OR compare with those which have dramatic shifts
 selt1      <- selRUD1[[7]]#185-proximal shift so proximal is expressed in axons
@@ -1214,380 +1073,8 @@ dev.off()
 
 
 
-### Compare with with Mass-Spec data
-foi   <- list.files("~/Desktop/DataAnalsyisRiccio/MSdata")
-foi   <- foi[grep(foi,pattern=".csv")]
-data  <- lapply(paste("~/Desktop/DataAnalsyisRiccio/MSdata/",foi,sep=""),function(x)return(read.csv(x)))
-descr <- c(as.character(data[[1]][,2]),as.character(data[[3]][,2]))
-ExtractGeneName <- function(test){
-  temp<- unlist(strsplit(test,split=" "))[grep(pattern="GN=",unlist(strsplit(test,split=" ")))]
-  return(gsub(temp,pattern="GN=",repl=""))
-}
-GS    <- unlist(lapply(descr,ExtractGeneName))
-for(i in c(1:length(data))){
-  data[[i]]$GS <- GS[match(as.character(data[[i]][,2]),descr)]
-  print(i)
-}
 
-#Some statistics on the number of protein detected in each compartments
-ax.prot                         <- unique(as.character(data[[1]]$GS))
-cb.prot                         <- unique(as.character(data[[3]]$GS))
-neur                            <- intersect(ax.prot,cb.prot)
-ax                              <- setdiff(ax.prot,cb.prot)
-cb                              <- setdiff(cb.prot,ax.prot)
-pdf(paste(outdir,"no.prot.detected.pdf",sep=""))
-par(mfrow=c(2,2))
-no.prot                         <- c(length(cb.prot),length(ax.prot))
-mycols                          <- c(rgb(22/255,70/255,120/255),rgb(117/255,191/255,68/255))
-mp<- barplot(no.prot,col=mycols,las=1)
-mtext(side=3,line=0,text=no.prot,cex=0.6,at=mp)
-mtext(side=2,line=3,text="# protein detected",cex=0.6)
 
-no.prot                         <- c(length(neur),length(cb),length(ax))
-mycols                          <- c(rgb(253/255,218/255,0/255),rgb(150/255,150/255,150/255),"black")
-mp                              <- barplot(no.prot,col=mycols,las=1)
-mtext(side=3,line=0,text=no.prot,cex=0.6,at=mp)
-mtext(side=2,line=3,text="# protein detected",cex=0.5)
 
-dev.off()
 
-whereProt                        <- rep("neur",length(unique(GS)))
-names(whereProt)                 <- unique(GS)
-whereProt[names(whereProt)%in%ax]<- "axons"
-whereProt[names(whereProt)%in%cb]<- "cb"
-
-detect.prot                      <- whereProt[match(anno_ngf$geneSymbol,names(whereProt))]
-detect.prot[is.na(detect.prot)]  <- "not detected"
-anno_ngf$detect.prot             <- detect.prot
-
-
-myGS <- unique(anno_ngf$geneSymbol[anno_ngf$])
-
-
-pie(table(anno_ngf$detect.prot[match(subanno$txID[selRUD1[[1]]],anno_ngf$txID)]))
-pie(table(anno_ngf$detect.prot[match(subanno$txID[selRUD1[[2]]],anno_ngf$txID)]))
-
-pie(table(anno_ngf$detect.prot[match(subanno$txID[selRUD1[[3]]],anno_ngf$txID)]))
-pie(table(anno_ngf$detect.prot[match(subanno$txID[selRUD1[[4]]],anno_ngf$txID)]))
-
-pie(table(anno_ngf$detect.prot[match(subanno$txID[selRUD1[[5]]],anno_ngf$txID)]))
-pie(table(anno_ngf$detect.prot[match(subanno$txID[selRUD1[[6]]],anno_ngf$txID)]))
-
-table(myGS%in%subanno$geneSymbol[selRUD1[[3]]],myGS%in%neur)
-
-strong <- read.csv("~/Desktop/DataAnalsyisRiccio/Dec2016/axonal_remodelling/alternative/candidates.csv",header=F,colClasses = "character")
-
-vec<-data.frame(table(anno_ngf$detect.prot[match(strong[,1],anno_ngf$txID)]))
-
-cbind(anno_ngf$detect.prot,as.character(anno_ngf$txID))[match(subanno$txID[selRUD1[[5]]],anno_ngf$txID),]
-
-mySel.IDs   <- do.call(what=cbind,args=lapply(selRUD1,function(X)return(as.character(subanno$uniqueID[X]))))
-for(i in c(1:ncol(mySel.IDs))){
-  mySel.IDs[duplicated(mySel.IDs[,i]),i]<- NA
-}
-mySel.GS   <- do.call(what=cbind,args=lapply(selRUD1,function(X)return(as.character(subanno$geneSymbol[X]))))
-for(i in c(1:ncol(mySel.GS))){
-  mySel.GS[duplicated(mySel.GS[,i]),i]<- NA
-}
-shiftType                                            <- rep("null",nrow(anno_ngf))
-shiftType[which(anno_ngf$uniqueID%in%mySel.IDs[,3])] <- "proximal.shift"
-shiftType[which(anno_ngf$uniqueID%in%mySel.IDs[,4])] <- "distal.shift"
-shiftTypeGS                                          <- rep("null",nrow(anno_ngf))
-shiftTypeGS[which(anno_ngf$GS%in%mySel.GS[[7]])]     <- "proximal.shift"
-shiftTypeGS[which(anno_ngf$GS%in%mySel.GS[[8]])]     <- "distal.shift"
-shiftTypeGS[which(anno_ngf$GS%in%intersect(mySel.GS[[7]],mySel.GS[[8]]))]<-"both"
-anno_ngf$shiftType                                   <- shiftType
-anno_ngf$shiftTypeGS                                 <- shiftTypeGS
-
-
-ix                               <- match(unique(anno_ngf$geneSymbol),anno_ngf$geneSymbol)
-table(anno_ngf$detect.prot[ix],anno_ngf$shiftTypeGS[ix])
-
-
-
-
-
-
-#Prepare for the output
-mySelOverall.GS       <- do.call(what=cbind,args=lapply(selRUD1,function(X)return(unique(as.character(subanno$geneSymbol[X])))))
-mySelOverall.txID     <- do.call(what=cbind,args=lapply(selRUD1,function(X)return(unique(as.character(subanno$txID[X])))))
-mySelOverall.uniqueID <- do.call(what=cbind,args=lapply(selRUD1,function(X)return(unique(as.character(subanno$uniqueID[X])))))
-
-for(i in c(1:ncol(mySelOverall))){
-  mySelOverall.GS[duplicated(mySelOverall.GS[,i]),i]             <-NA
-  mySelOverall.txID[duplicated(mySelOverall.txID[,i]),i]         <-NA
-  mySelOverall.uniqueID[duplicated(mySelOverall.uniqueID[,i]),i] <-NA
-}
-
-colnames(mySelOverall.GS) <-colnames(mySelOverall.txID) <-colnames(mySelOverall.uniqueID) <- paste(rep(c("selShort","selLong"),3),c("sel0","sel0","sel1","sel2","sel3","sel3"),sep=".")
-write.table(mySelOverall.GS,file=paste(outdir,"mySelOverall.GS.txt",sep=""),col.names = TRUE,row.names = FALSE,quote=F,sep="\t")
-write.table(mySelOverall.txID,file=paste(outdir,"mySelOverall.txID.txt",sep=""),col.names = TRUE,row.names = FALSE,quote=F,sep="\t")
-write.table(mySelOverall.uniqueID,file=paste(outdir,"mySelOverall.uniqueID.txt",sep=""),col.names = TRUE,row.names = FALSE,quote=F,sep="\t")
-
-pdf("~/Desktop/DataAnalysisRiccio/Dec2016/axonal_remodelling/final_analysis/plot_final_enrich_p.pdf")
-foi <- list.files("~/Desktop/DataAnalysisRiccio/Dec2016/axonal_remodelling/final_analysis/")
-foi <- foi[intersect(grep(foi,pattern="_f"),grep(foi,pattern="F0"))][c(2:3)]
-final_enrich <- lapply(foi,function(Z)return(read.csv(paste("~/Desktop/DataAnalysisRiccio/Dec2016/axonal_remodelling/final_analysis/",Z,sep=""))))
-PlotFinalEnrich(final_enrich)
-
-foi <- list.files("~/Desktop/DataAnalysisRiccio/Dec2016/axonal_remodelling/final_analysis/")
-foi <- foi[intersect(grep(foi,pattern="_f"),grep(foi,pattern="F1"))][c(2:3)]
-final_enrich <- lapply(foi,function(Z)return(read.csv(paste("~/Desktop/DataAnalysisRiccio/Dec2016/axonal_remodelling/final_analysis/",Z,sep=""))))
-PlotFinalEnrich(final_enrich)
-
-foi <- list.files("~/Desktop/DataAnalysisRiccio/Dec2016/axonal_remodelling/final_analysis/")
-foi <- foi[intersect(grep(foi,pattern="_f"),grep(foi,pattern="F2"))][c(2:3)]
-final_enrich <- lapply(foi,function(Z)return(read.csv(paste("~/Desktop/DataAnalysisRiccio/Dec2016/axonal_remodelling/final_analysis/",Z,sep=""))))
-PlotFinalEnrich(final_enrich)
-
-foi <- list.files("~/Desktop/DataAnalysisRiccio/Dec2016/axonal_remodelling/final_analysis/")
-foi <- foi[intersect(grep(foi,pattern="_f"),grep(foi,pattern="F3"))][c(2:3)]
-final_enrich <- lapply(foi,function(Z)return(read.csv(paste("~/Desktop/DataAnalysisRiccio/Dec2016/axonal_remodelling/final_analysis/",Z,sep=""))))
-PlotFinalEnrich(final_enrich)
-
-dev.off()
-
-
---> I should select some examples to illustrate such as Rab, translation, ubiquitination
-
-#Long
-GO:0016197 activation of JUN kinase activity
-GetOI(mygoID="GO:0016197",sampleGO.RUD1[[7]][[2]])
-
-GO:0048812 neuron projection morphogenesis
-GetOI(mygoID="GO:0048812",sampleGOLong[[2]])
-GO:0007265 Ras protein signal transduction
-GetOI(mygoID="GO:0007265",sampleGOLong[[2]])
-GO:0015031 protein transport
-GetOI(mygoID="GO:0015031",sampleGOLong[[2]])
-
-
-#Short
-GO:0016197 endosomal transport
-GetOI(mygoID="GO:0016197",sampleGOShort[[2]])
-GO:0060675 ureteric bud morphogenesis
-GetOI(mygoID="GO:0060675",sampleGOShort[[2]])
-GO:0006417 regulation of translation
-GetOI(mygoID="GO:0006417",sampleGOShort[[2]])
-GO:0032482 Rab protein signal transduction
-GetOI(mygoID="GO:0032482",sampleGOShort[[2]])
-GO:0051301 cell division
-GetOI(mygoID="GO:0051301",sampleGOShort[[2]])
-GO:0006886 intracellular protein transport
-GetOI(mygoID="GO:0006886",sampleGOShort[[2]])
-GO:0006915 apoptotic process
-GetOI(mygoID="GO:0006915",sampleGOShort[[2]])
-
-
-###### To plot, get the values of interest
-ix1                  <- c(1:nrow(anno_ngf))
-ix2                  <- match(as.character(anno_ngf$imIDp),as.character(anno_ngf$uniqueID))
-mydat                <- anno_ngf[,match(c("NGF.axon.1.raw","NGF.axon.2.raw","NGF.cb.1.raw","NGF.cb.2.raw"),colnames(anno_ngf))]
-myProximal           <- apply(mydat,2,function(x)return(x[ix2]))
-myDistal             <- apply(mydat,2,function(x)return(x[ix1]))
-myProxi.avg          <- t(apply(myProximal,1,FUN=function(X)return(tapply(X,INDEX=factor(c("axon","axon","cb","cb"),levels=c("axon","cb")),FUN=mean))))
-myDistal.avg        <- t(apply(myDistal,1,FUN=function(X)return(tapply(X,INDEX=factor(c("axon","axon","cb","cb"),levels=c("axon","cb")),FUN=mean))))
-myProxi.sd          <- t(apply(myProximal,1,FUN=function(X)return(tapply(X,INDEX=factor(c("axon","axon","cb","cb"),levels=c("axon","cb")),FUN=sd))))
-myDistal.sd        <- t(apply(myDistal,1,FUN=function(X)return(tapply(X,INDEX=factor(c("axon","axon","cb","cb"),levels=c("axon","cb")),FUN=sd))))
-
-RDU                <- do.call(what=cbind,lapply(c(1:ncol(myProximal)),FUN=function(X)return(myDistal[,X]/(myDistal[,X]+myProximal[,X]))))
-RDU.avg            <- t(apply(RDU,1,FUN=function(X)return(tapply(X,INDEX=factor(c("axon","axon","cb","cb"),levels=c("axon","cb")),FUN=mean))))
-RDU.sd            <- t(apply(RDU,1,FUN=function(X)return(tapply(X,INDEX=factor(c("axon","axon","cb","cb"),levels=c("axon","cb")),FUN=sd))))
-
-myDat <- data.frame(GS=anno_ngf$geneSymbol,
-                    txID=anno_ngf$uniqueID,
-                    proxiID=anno_ngf$uniqueID[ix2],
-                    distalID=anno_ngf$uniqueID[ix1],
-
-                    mean.cb.proxi=myProxi.avg[,2],
-                    sd.cb.proxi=myProxi.sd[,2],
-                    mean.cb.distal=myDistal.avg[,2],
-                    sd.cb.distal=myDistal.sd[,2],
-                    mean.rdu.cb=RDU.avg[,2],
-                    sd.rdu.ax=RDU.sd[,2],
-
-                    mean.ax.proxi=myProxi.avg[,1],
-                    sd.ax.proxi=myProxi.sd[,1],
-                    mean.ax.distal=myDistal.avg[,1],
-                    sd.ax.distal=myDistal.sd[,1],
-                    mean.rdu.ax=RDU.avg[,1],
-                    sd.rdu.ax=RDU.sd[,1]
-)
-
-
-ix1                  <- c(1:nrow(anno_ngf))
-ix2                  <- match(as.character(anno_ngf$imIDp),as.character(anno_ngf$uniqueID))
-mydat                <- anno_ngf[,match(c("NGF.axon.1.raw","NGF.axon.2.raw","NGF.cb.1.raw","NGF.cb.2.raw"),colnames(anno_ngf))]
-myProximal           <- apply(mydat,2,function(x)return(log2(1+x[ix2])))
-myDistal             <- apply(mydat,2,function(x)return(log2(1+x[ix1])))
-myProxi.avg          <- t(apply(myProximal,1,FUN=function(X)return(tapply(X,INDEX=factor(c("axon","axon","cb","cb"),levels=c("axon","cb")),FUN=mean))))
-myDistal.avg        <- t(apply(myDistal,1,FUN=function(X)return(tapply(X,INDEX=factor(c("axon","axon","cb","cb"),levels=c("axon","cb")),FUN=mean))))
-myProxi.sd          <- t(apply(myProximal,1,FUN=function(X)return(tapply(X,INDEX=factor(c("axon","axon","cb","cb"),levels=c("axon","cb")),FUN=sd))))
-myDistal.sd        <- t(apply(myDistal,1,FUN=function(X)return(tapply(X,INDEX=factor(c("axon","axon","cb","cb"),levels=c("axon","cb")),FUN=sd))))
-
-RDU                <- do.call(what=cbind,lapply(c(1:ncol(myProximal)),FUN=function(X)return(myDistal[,X]/(myDistal[,X]+myProximal[,X]))))
-RDU.avg            <- t(apply(RDU,1,FUN=function(X)return(tapply(X,INDEX=factor(c("axon","axon","cb","cb"),levels=c("axon","cb")),FUN=mean))))
-RDU.sd            <- t(apply(RDU,1,FUN=function(X)return(tapply(X,INDEX=factor(c("axon","axon","cb","cb"),levels=c("axon","cb")),FUN=sd))))
-
-myDat2 <- data.frame(GS=anno_ngf$geneSymbol,
-                     txID=anno_ngf$uniqueID,
-                     proxiID=anno_ngf$uniqueID[ix2],
-                     distalID=anno_ngf$uniqueID[ix1],
-
-                     mean.cb.proxi=myProxi.avg[,2],
-                     sd.cb.proxi=myProxi.sd[,2],
-                     mean.cb.distal=myDistal.avg[,2],
-                     sd.cb.distal=myDistal.sd[,2],
-                     mean.rdu.cb=RDU.avg[,2],
-                     sd.rdu.ax=RDU.sd[,2],
-
-                     mean.ax.proxi=myProxi.avg[,1],
-                     sd.ax.proxi=myProxi.sd[,1],
-                     mean.ax.distal=myDistal.avg[,1],
-                     sd.ax.distal=myDistal.sd[,1],
-                     mean.rdu.ax=RDU.avg[,1],
-                     sd.rdu.ax=RDU.sd[,1]
-)
-
-
-oi <- which(myDat$GS=="Msantd3")
-View(myDat[oi,])
-View(myDat2[oi,])
-
-###### To plot, get the values of interest
-
-
-
-
-
-
-### Analysis when considering only 2 isoforms per txID
-
-load("/Users/luisie01/Desktop/DataAnalsyisRiccio/Dec2016/utrid/anno_ngf_stringent/anno_ngf_March_12.RData")#Contain "anno_ngf","ngfGRS"
-myUTR        <- import.gff("/Users/luisie01/Desktop/DataAnalsyisRiccio/Dec2016/utrid/APA_stringent/Lngf_sub.gtf",format="gtf",asRangedData = FALSE)
-names(myUTR) <- as.character(myUTR$ID)
-ix1          <- match(names(myUTR),anno_ngf$uniqueID)
-myUTR        <- myUTR[!is.na(ix1),]
-ix1          <- match(names(myUTR),anno_ngf$uniqueID)
-anno_ngf    <- anno_ngf[ix1,]
-outdir       <-  "/Users/luisie01/Desktop/DataAnalsyisRiccio/Dec2016/axonal_remodelling/"
-load("/Users/luisie01/Desktop/DataAnalsyisRiccio/GRanges_comprehensive_transcriptome_v78_rn5_23022014.RData")
-
-
-
-#
-# A. FILTERING
-#
-
-# A.1 Remove redundant transcript
-id       <- paste(start(myUTR),end(myUTR),strand(myUTR),sep=".")#674 duplicated
-myUTR    <- myUTR[-which(duplicated(id)),]
-anno_ngf <- anno_ngf[-which(duplicated(id)),]
-
-# A.2 Remove those transcript ID which have only one isoforms
-temp    <- as.data.frame(table(as.character(anno_ngf$txID)))
-no.iso  <- temp[match(anno_ngf$txID,as.character(temp[,1])),2]
-myUTR   <- myUTR[no.iso>1,]#8'884 with only 1 isoforms
-anno_ngf<- anno_ngf[no.iso>1,]
-
-# A.3 Check that the closest neighbour is not within 300 nt
-#iso_ordered
-tempL                     <- anno_ngf$newL
-names(tempL)              <- anno_ngf$uniqueID
-tempG                     <- as.factor(as.character(anno_ngf$txID))
-myord                     <- tapply(tempL,INDEX=tempG,function(x)return(cbind(names(x)[sort(as.numeric(as.character(x)),index.return=T,decreasing=F)$ix],c(1:length(x)))))
-test                      <- do.call(what=rbind,args=myord)
-iso_ordered               <- as.numeric(test[match(anno_ngf$uniqueID,test[,1]),2])
-#nextIsoform
-tempid                    <- paste(anno_ngf$txID,iso_ordered,sep=".")
-next.iso                  <- paste(anno_ngf$txID,(as.numeric(as.character(iso_ordered))+1),sep=".")
-nextID                    <- anno_ngf$uniqueID[match(next.iso,tempid)]
-#distTonext
-distonext                 <- rep(NA,nrow(anno_ngf))
-sel                       <- !is.na(nextID)
-d1                        <- as.numeric(as.character(anno_ngf$newL))[sel]
-d2                        <- as.numeric(as.character(anno_ngf$newL))[match(nextID[sel],anno_ngf$uniqueID)]
-distonext[sel]            <- d2-d1
-#Fproxi
-Fproxi                    <- which(distonext<300)#none; ok what expected
-Fproxi
-
-
-# A.4 Remove those potential spurious ones
-torm     <- which(mcols(myUTR)$is.pas=="FALSE"&mcols(myUTR)$isoform!=0)
-myUTR    <- myUTR[-torm,]
-anno_ngf <- anno_ngf[-torm,]
-temp    <- as.data.frame(table(as.character(anno_ngf$txID)))
-no.iso  <- temp[match(anno_ngf$txID,as.character(temp[,1])),2]
-myUTR   <- myUTR[no.iso>1,]
-anno_ngf<- anno_ngf[no.iso>1,]
-no.iso  <- no.iso[no.iso>1]
-
-# A.5 When several isoforms select the most expressed in CB
-tempL                     <- anno_ngf$newL
-names(tempL)              <- anno_ngf$uniqueID
-tempG                     <- as.factor(as.character(anno_ngf$txID))
-myord                     <- tapply(tempL,INDEX=tempG,function(x)return(cbind(names(x)[sort(as.numeric(as.character(x)),index.return=T,decreasing=F)$ix],c(1:length(x)))))
-test                      <- do.call(what=rbind,args=myord)
-iso_ordered               <- as.numeric(test[match(anno_ngf$uniqueID,test[,1]),2])
-gp1                       <- anno_ngf[no.iso==2|iso_ordered==1,]
-gp2                       <- anno_ngf[no.iso>2&iso_ordered>1,]
-tempL                     <- gp2$NGF.cb.log2.sum
-names(tempL)              <- gp2$uniqueID
-mymax                     <- tapply(tempL,INDEX=factor(as.character(gp2$txID)),function(x)return(names(x)[which(x==max(x))[1]]))
-sel                       <- match(mymax,gp2$uniqueID)
-gp2                       <- gp2[sel,]
-
-anno_ngf                  <- rbind(gp1,gp2)
-myUTR                     <- myUTR[match(anno_ngf$uniqueID,myUTR$ID),]
-temp                      <- as.data.frame(table(as.character(anno_ngf$txID)))
-no.iso                    <- temp[match(anno_ngf$txID,as.character(temp[,1])),2]
-
-#
-# B. ADD INFORMATION
-#
-
-
-# B.1 Remake ordering and imID
-tempL                     <- anno_ngf$newL
-names(tempL)              <- anno_ngf$uniqueID
-tempG                     <- as.factor(as.character(anno_ngf$txID))
-myord                     <- tapply(tempL,INDEX=tempG,function(x)return(cbind(names(x)[sort(as.numeric(as.character(x)),index.return=T,decreasing=F)$ix],c(1:length(x)))))
-test                      <- do.call(what=rbind,args=myord)
-test                      <- test[match(anno_ngf$uniqueID,test[,1]),]
-temp                      <- as.data.frame(table(as.character(anno_ngf$txID)))
-no.iso                    <- temp[match(anno_ngf$txID,as.character(temp[,1])),2]
-anno_ngf$no.iso           <- no.iso
-anno_ngf$iso_ordered      <- test[,2]
-tempL                     <- as.character(anno_ngf$iso_ordered)
-names(tempL)              <- as.character(anno_ngf$uniqueID)
-imID1                     <- tapply(tempL,INDEX=as.factor(as.character(anno_ngf$txID)),function(x)return(names(x)[x=="1"]))
-imIDp                     <- as.character(imID1[match(anno_ngf$txID,names(imID1))])
-anno_ngf$imIDp            <- imIDp
-
-# B.2 Add key column in anno_ngf:expressed in at least one sample
-#NGF.cb.is.expressed.iso                    <- anno_ngf$detect.iso.ngf%in%c("cb.cb","neur.cb","neur.neur")
-#NGF.axon.is.expressed.iso                  <- anno_ngf$detect.iso.ngf%in%c("neur.neur","neur.ax","ax.ax")
-NGF.axon.is.expressed.iso                   <- anno_ngf$NGF.axon.1.isexpressed|anno_ngf$NGF.axon.2.isexpressed
-NGF.cb.is.expressed.iso                     <- anno_ngf$NGF.cb.1.isexpressed|anno_ngf$NGF.cb.2.isexpressed
-anno_ngf                                    <- data.frame(anno_ngf,NGF.cb.is.expressed.iso,NGF.axon.is.expressed.iso)
-
-# B.3 Get the order and the ID of the longest detected one
-temp1                 <- tapply(anno_ngf$iso_ordered[anno_ngf$NGF.axon.is.expressed.iso],factor(as.character(anno_ngf$txID[anno_ngf$NGF.axon.is.expressed.iso])),FUN=function(x)return(max(as.numeric(x))))
-long.ax                <- as.integer(temp1[match(anno_ngf$txID,names(temp1))])
-long.ax[is.na(long.ax)]<- 1
-temp1                <- tapply(anno_ngf$iso_ordered[anno_ngf$NGF.cb.is.expressed.iso],factor(as.character(anno_ngf$txID[anno_ngf$NGF.cb.is.expressed.iso])),FUN=max)
-long.cb              <- as.integer(temp1[match(anno_ngf$txID,names(temp1))])
-long.cb[is.na(long.cb)]<- 1
-
-anno_ngf$ord.longest <- apply(cbind(long.ax,long.cb) ,1,max)
-temp                 <- anno_ngf[,match(c("ord.longest","iso_ordered","uniqueID"),colnames(anno_ngf))]
-myid<- tapply(c(1:nrow(temp)),INDEX=anno_ngf$txID,FUN=function(IX){
-  return(as.character((temp$uniqueID[IX])[match(unique(temp$ord.longest[IX]),as.integer(temp$iso_ordered[IX]))]))
-})
-myid               <- myid[match(anno_ngf$txID,names(myid))]
-anno_ngf$longestID <- myid
-
-# B.4 Get distance to longest expressed
-anno_ngf$distToLongest <- anno_ngf$newL[match(anno_ngf$longestID,anno_ngf$uniqueID)]-anno_ngf$newL
 
