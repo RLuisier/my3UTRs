@@ -1,5 +1,5 @@
 1. Get stranded coverage at single nucleotide level [PE_stranded_Coverage.sh](../scripts/PE_stranded_Coverage.sh)
-```
+```bash
 OUTDIR=./Coverage
 ./scripts/PE_stranded_Coverage.sh  -p $OUTDIR -b $BAM -f 2 -n $OUTNAME
 ```
@@ -8,7 +8,7 @@ This script generates 2 files for each sample, for the positive (`$OUTNAME.pos.c
 
 
 2. Remove positions which are not covered by at least 7 reads
-```
+```bash
 TARDIR=./Coverage/
 T=7
 for FILES in `ls $TARDIR`; do
@@ -19,7 +19,7 @@ done
 
 
 3. Split coverage profile per chromosome
-```
+```bash
 TARDIR=./Coverage/
 cat ./SAMPLES.txt | while read SAMPLE
 do
@@ -36,7 +36,7 @@ done
 
 
 4. Identify segments of the genome larger or equal to 100nt covered by at leat 7 reads
-```
+```bash
 TARDIR=./Coverage/
 cat ./SAMPLES.txt| while read SAMPLE
 do
@@ -54,7 +54,7 @@ done
 
 5. Merge expressed regions gapped by low-mappable using script mergeNeighbors.R and filter
 
-```
+```bash
 INDIR=./Coverage
 OUTDIR=./utrid/GrossSegments
 ANNOTATION=./annotation/rn5/GRanges_comprehensive_transcriptome_rat_24_nov_2015.RData
@@ -79,7 +79,7 @@ done
 
 
 6. Merge all gff files
-```
+```bash
 cd ./utrid/GrossSegments
 cat ./SAMPLES.txt| while read SAMPLE
 do
@@ -113,7 +113,7 @@ done
 
 7. Add extension
 
-```
+```bash
 ANNOTATION=./annotation/rn5/GRanges_comprehensive_transcriptome_rat_24_nov_2015.RData
 TARDIR=./utrid/GrossSegments/GFF
 cat  ./SAMPLES.txt  | while read SAMPLE
