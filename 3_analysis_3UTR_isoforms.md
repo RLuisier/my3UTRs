@@ -29,7 +29,7 @@ export.gff(L2_500,"./utrid/APA/L2_500.gtf",format="gtf")
 
 2. Extract coverage of the last 500 nt fragment
 
-```
+```bash
 OUTDIR=./Coverage/utrCov/500/
 ANNOTATION=./utrid/APA/L2_500.gtf
 SF=/SAN/luscombelab/Riccio/Exp_1/FASTQ/P2P3P4/scaling_factor.txt
@@ -46,17 +46,12 @@ done
 ```
 
 3. Collect coverage
+
 Described in file [import_coverage.R](./scripts/import_coverage.R), the outputs are the following:
-
-*[myCov500](./data/myCov500.tab) the raw count table. 
-
-*[anno_ngf](./data/anno_ngf.tab)
-
-*[Lngf.gtf](./annotation/rn5/Lngf.gtf) the gtf file of the 3' UTR isoforms covered by at least 10 reads.
-
-*[Lngf_sub.gtf](./annotation/rn5/Lngf_sub.gtf) the same as Lngf.gtf however where 3'UTR which are within 500nt of each other are filtered out, keeping the longest 3' UTR isoform. Furthermore isoforms of length smaller than 10 nt were remove.
+  * [myCov500](./data/myCov500.tab) the raw count table.
+  * [anno_ngf](./data/anno_ngf.tab)
+  * [Lngf.gtf](./annotation/rn5/Lngf.gtf) the gtf file of the 3' UTR isoforms covered by at least 10 reads.
+  * [Lngf_sub.gtf](./annotation/rn5/Lngf_sub.gtf) the same as Lngf.gtf however where 3'UTR which are within 500nt of each other are filtered out, keeping the longest 3' UTR isoform. Furthermore isoforms of length smaller than 10 nt were remove.
 
 
 4. Characterise the output of the pipeline
-
-
