@@ -1,4 +1,4 @@
-1. Get stranded coverage at single nucleotide level [PE_stranded_Coverage.sh](../scripts/PE_stranded_Coverage.sh)
+1. Get stranded coverage at single nucleotide level [PE_stranded_Coverage.sh](./scripts/PE_stranded_Coverage.sh)
 ```bash
 OUTDIR=./Coverage
 ./scripts/PE_stranded_Coverage.sh  -p $OUTDIR -b $BAM -f 2 -n $OUTNAME
