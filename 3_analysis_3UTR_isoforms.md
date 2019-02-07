@@ -58,13 +58,11 @@ Described in file [import_coverage.R](./scripts/import_coverage.R), the outputs 
 
 The reliability of the novel 3' end annotations was assessed by checking them against a compiled polyA Atlas. Assembling the Polyadenylation Site Atlas: first 3' UTR annotations from RefSeq (Rn5 and Rn6) and Ensembl (Rn6) are combined, where overlapping regions are merged. Given that rat genome is poorly annotated compared to other species such as human and mouse, and because 3' end are highly conserved across species, we futher combined existing rat 3' UTR annotation with RefSeq annotation from other species (xenoRefseq). Then, to generate a comprehensive atlas of rat PAS in 3' UTR, polyadenylation annotations from PolyA_DB 2 (37), and APADB (39) were used together with the polyadyenlation atlas from unibasel (both human and mouse). Finally PAS obtained from rat 3'-Seq data (Derti et al.) were also used to expand the repertoire of PAS. Genome annotation files from Rn6 assembly or other species have been converted to Rn5 using Crossmap. Downstream analysis is described in [compare_with_polyA_atlas.R](./scripts/compare_with_polyA_atlas.R).
 
-### 5. Analysis of the PAS usage
-
-### 6. Characterise the output of the pipeline
+### 5. Characterise the output of the pipeline
 
 Characterise the output of the pipeline in terms of number of newly identified 3' UTR isoforms, 3' UTR expression in each compartment, number of isoforms expressed. Described in file [characterise_output_pipeline.R](./scripts/characterise_output_pipeline.R).
 
-### 7. Differential 3’UTR isoforms expression analysis
+### 6. Differential 3’UTR isoforms expression analysis
 
 Perform differential 3' UTR expression analysis between cell body and axonal compartment leading to the identification of candidate 3' UTR for axonal remodelling. Described in file [differential_expression_between_compartments.R](./scripts/differential_expression_between_compartments.R).
 
