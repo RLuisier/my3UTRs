@@ -13,14 +13,14 @@ mRNA was obtained in duplicates from either cell body or distal axons of rat sym
 
 
 ## Dependencies
-TopHat2, BEDTools suite,
+TopHat2, BEDTools suite, R
 
 ## Project inventory
 
 After trimming and QC with fastqc, the RNA-seq data were aligned to the rat genome Rn5 with TopHat using the following parameters:
 `tophat2 --mate-inner-dist 1 --max-multihits 1 -N 2 -p 8 -G $geneModel --library-type fr-firststrand -o ${out}${data} $genome ${paths}${file1} ${paths}${file2}` where `$geneModel` is the path to the Ensembl Rn5 (v78) gtf annotation file, `$genome` is the path to the indexed rat genome. Since several run of sequencing have been performed, we then merged all BAM files from same samples together using `samtools merge`
 
-### [0_characterise_tx_read_density.md](./characterise_tx_read_density.md)
+### [0_characterise_tx_read_density.md](./0_characterise_tx_read_density.md)
 This file describes the steps to characterise the 3'--5' end bias in coverage, demonstrating that the data exhibits a similar coverage profile as those from 3'end seq data. 
 
 
