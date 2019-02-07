@@ -1,4 +1,4 @@
-# my3UTR
+# my3UTRs
 This repository contains all scripts related to the manuscript [3′UTR cleavage of transcripts localized in axons of sympathetic neurons](https://www.biorxiv.org/content/10.1101/170100v2) which includes the custom pipeline that re-annotates and quantifies 3' end alternative transcripts using RNA-seq data together with down-stream analysis. It is organised as follows:
 
 ### A. Bioinformatic pipeline to identify alternative 3' ends from 3'end-seq data
