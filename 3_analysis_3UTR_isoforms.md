@@ -54,7 +54,9 @@ Described in file [import_coverage.R](./scripts/import_coverage.R), the outputs 
   * [Lngf_sub.gtf](./annotation/rn5/Lngf_sub.gtf) the same as Lngf.gtf however where 3'UTR which are within 500nt of each other are filtered out, keeping the longest 3' UTR isoform. Furthermore isoforms of length smaller than 10 nt were remove.
 
 
-### 4. Validate the pipeline by comparing with polA atlas
+### 4. Validate the pipeline by comparing with compiled polyA atlas
+
+The reliability of the novel 3' end annotations was assessed by checking them against the RefSeq and poly(A) databases. This is described in [compare_with_polyA_atlas.R](./scripts/compare_with_polyA_atlas.R).
 
 ### 5. Analysis of the PAS usage
 
@@ -62,7 +64,7 @@ Described in file [import_coverage.R](./scripts/import_coverage.R), the outputs 
 
 Characterise the output of the pipeline in terms of number of newly identified 3' UTR isoforms, 3' UTR expression in each compartment, number of isoforms expressed. Described in file [characterise_output_pipeline.R](./scripts/characterise_output_pipeline.R).
 
-### 7. Analysis of differential 3' UTR usage between cell body and axonal compartment
+### 7. Differential 3’UTR isoforms expression analysis
 
 Perform differential 3' UTR expression analysis between cell body and axonal compartment leading to the identification of candidate 3' UTR for axonal remodelling. Described in file [differential_expression_between_compartments.R](./scripts/differential_expression_between_compartments.R).
 
