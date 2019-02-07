@@ -273,8 +273,6 @@ for(i in c(2:length(Lev))){
 }
 selected                        <- c(as.character(sub1$uniqueID),as.character(modifed$uniqueID))
 anno_ngf$selected.for.distance  <- anno_ngf$uniqueID%in%selected
-
-
 write.table(x=anno_ngf,file="./data/anno_ngf.tab",row.names = TRUE,col.names = TRUE,quote=FALSE,sep="\t")
 ngfGRS <- ngfGRS[which(ngfGRS$uniqueID%in%anno_ngf$uniqueID[anno_ngf$selected.for.distance]),]
 export.gff(object=ngfGRS,con="./annotation/rn5/Lngf_sub.gtf",format="gtf")
