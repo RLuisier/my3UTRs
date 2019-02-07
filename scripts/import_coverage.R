@@ -15,15 +15,10 @@ covdir         <- "./Coverage/utrCov"
 foi                  <- list.files(paste(covdir,"/500",sep=""))
 names                <- gsub(foi,pattern=".txt",repl="")
 types                <- do.call(lapply(names,function(x)return(length(unlist(strsplit(x,split="[\\_,\\.,-]"))))),what=c)
-names_norms          <- names[types=="5"]
-names_norms          <- do.call(lapply(names[types=="5"],function(x)return(unlist(strsplit(x,split="[\\_,\\.,-]")))),what=rbind)
-names_norms          <- data.frame(foi[types=="5"],names_norms)
-colnames(names_norms )<-c("id","treatment","origin","replicate","chr","type")
 names_raw           <- names[intersect(which(types=="4"),grep(names,pattern=".chr"))]
 names_raw           <- do.call(lapply(names[intersect(which(types=="4"),grep(names,pattern=".chr"))],function(x)return(unlist(strsplit(x,split="[\\_,\\.,-]")))),what=rbind)
 names_raw           <- data.frame(foi[intersect(which(types=="4"),grep(names,pattern=".chr"))],names_raw)
 colnames(names_raw )<-c("id","treatment","origin","replicate","chr")
-
 samples                 <- factor(paste(names_raw$treatment,names_raw$origin,names_raw$replicate,sep="."))
 covraw_500              <- lapply(c(1:length(unique(samples))),function(X)return(do.call(lapply(which(samples==unique(samples)[X]), function(Z)return(read.table(paste(covdir,"/500/",names_raw$id[Z],sep="")))),what=rbind)))
 rown500                 <-  unique(do.call(lapply(covraw_500,function(x)return(as.character(x[,1]))),what=c))
@@ -33,31 +28,14 @@ for(i in c(1:length(covraw_500))){
 }
 colnames(myCovRaw500)   <- unlist(lapply(unique(samples),function(x)return(paste(x,".raw",sep=""))))
 rownames(myCovRaw500)   <- rown500
-
-samples                 <- factor(paste(names_norms$treatment,names_norms$origin,names_norms$replicate,sep="."))
-covnorm_500             <- lapply(c(1:length(unique(samples))),function(X)return(do.call(lapply(which(samples==unique(samples)[X]), function(Z)return(read.table(paste(covdir,"/500/",names_norms$id[Z],sep="")))),what=rbind)))
-rown500                 <-  unique(do.call(lapply(covraw_500,function(x)return(as.character(x[,1]))),what=c))
-myCovNorm500            <- matrix(0,nrow=length(rown500),ncol=length(covnorm_500))
-for(i in c(1:length(covnorm_500))){
-  myCovNorm500[,i]      <- covnorm_500[[i]][match(rown500,as.character(covnorm_500[[i]][,1])),2]
-}
-colnames(myCovNorm500)  <- unlist(lapply(unique(samples),function(x)return(paste(x,".norm",sep=""))))
-rownames(myCovNorm500)  <- rown500
-
 myCov500                <- myCovRaw500
-myCov500                <- cbind(myCov500,myCovNorm500[match(rownames(myCov500),rownames(myCovNorm500)),])
-id                      <- match(as.character(ngfGRS$uniqueID),rownames(myCov500))
-ngfGRS                  <- ngfGRS[!is.na(id),]
-id                      <- match(as.character(ngfGRS$uniqueID),rownames(myCov500))
-myCov500                <- myCov500[id,]
 
 write.csv(x=myCov500,file="./data/myCov500.csv")
 
 
 
-
-
-# D. Identify expressed genes according to coverage: 500 nt. Please note that it seems more accurate to use the 22'000 tX rather than the entire pool to determine the threshold.
+# C. Identify reliably expressed 3' UTR isoforms 
+# Please note that it seems more accurate to use the 22'000 tX rather than the entire pool to determine the threshold.
 plotMclust <- function(mydata=mydat[[1]],mybim=bimdens[[1]],myLim=log2(Lim[1]),myname=names(Lim)[1],mytitle="TPM"){
   x  <- seq(from=0, to=floor(max(mydata)),length=100)
   if(length(mybim$parameters$variance$sigmasq)>1){
@@ -105,20 +83,10 @@ plotMclust <- function(mydata=mydat[[1]],mybim=bimdens[[1]],myLim=log2(Lim[1]),m
 }
 
 
-dat1  <- myCov500[grep(rownames(myCov500),pattern="\\.0"),c(1:8)]
-
-
-
-mylistCov500  <- lapply(c(1:8),function(x)return(log2(dat1[dat1[,x]>=5.012531e-02,x])))
-
-mylistCov500  <- lapply(c(1:8),function(x)return(log2(dat1[dat1[,x]>=1,x])))
-mylistCov300  <- lapply(c(1:8),function(x)return(log2(dat2[dat2[,x]>=1,x])))
-
-names(mylistCov500)<-colnames(myCov500)[c(1:8)]
-names(mylistCov300)<-colnames(myCov300)[c(1:8)]
-
-
-mydat <- mylistCov500
+dat1               <- myCov500[grep(rownames(myCov500),pattern="\\.0"),]
+mylistCov500       <- lapply(c(1:4),function(x)return(log2(dat1[dat1[,x]>=1,x])))
+names(mylistCov500)<-colnames(myCov500)
+mydat              <- mylistCov500
 require(mclust)
 bimdens <- list()
 for(i in c(1:length(mydat))){
@@ -139,7 +107,6 @@ SelectExpressed1 <- function(dat=log2(htseq[,1]+1)){
 Lim <- unlist(lapply(c(1:length(mydat)),FUN=function(x)return(2^SelectExpressed1(dat=mydat[[x]])[[2]])))
 Limp<- log2(Lim)
 
-pdf(paste(outdir,"detect_expressed_genes_cov_500_all.pdf",sep=""))
 par(mfrow=c(2,2),mar=c(3,3,3,3))
 for(i in c(1:length(Lim))){
   no.expressed <- sum(mydat[[i]]>=Limp[i])
@@ -147,7 +114,7 @@ for(i in c(1:length(Lim))){
   mtext(side=3,line=0,text=paste("no.expressed=",no.expressed),cex=0.6)
 }
 
-Lim         <- rep(c(10,10,10,10),2)#Please note that this limits will not be used at a later stage; only for this initial
+Lim         <- rep(10,4)#Please note that this limits will not be used at a later stage; only for this initial
 Limp        <- log2(Lim)
 
 par(mfrow=c(2,2),mar=c(3,3,3,3))
@@ -157,11 +124,9 @@ for(i in c(1:length(Lim))){
     mtext(side=3,line=0,text=paste("no.expressed=",no.expressed),cex=0.6)
 
 }
-dev.off()
 
 
-
-mydata  <- log2(myCov500[,which(info$type=="raw")])
+mydata  <- log2(myCov500)
 mydata[is.na(mydata)]<-0
 myselG  <- matrix(FALSE,nrow=nrow(mydata),ncol=ncol(mydata))
 for(i in c(1:ncol(myselG))){
@@ -170,20 +135,16 @@ for(i in c(1:ncol(myselG))){
 colnames(myselG) <- colnames(mydata)
 rownames(myselG) <- rownames(mydata)
 
-groups                      <- factor(paste(info$treatment[info$type=="raw"],info$origin[info$type=="raw"],sep="."))
-is.expressed.iso            <- t(apply(myselG,1,function(x)return(tapply(x,INDEX=groups,FUN=function(z)return(sum(z)==2)))))
+info                 <- do.call(lapply(colnames(myCov500),function(x)return(unlist(strsplit(x,split="\\.")))),what=rbind)
+info                 <- data.frame(colnames(myCov500),info)
+colnames(info)       <-c("id","treatment","origin","replicate","type")
+is.expressed.iso            <- t(apply(myselG,1,function(x)return(tapply(x,INDEX=factor(info$origin),FUN=function(z)return(sum(z)==2)))))
 
-#Selection based on the expression AND on I0
-selNGF <- union(which(ngfGRS$ID%in%rownames(is.expressed.iso)[apply(is.expressed.iso[,c(1,2)],1,function(x)return(sum(x)>0))]),
+#Selection based on the expression and I0
+selNGF <- union(which(ngfGRS$ID%in%rownames(is.expressed.iso)[apply(is.expressed.iso,1,function(x)return(sum(x)>0))]),
             grep("\\.0",ngfGRS$ID))
-
-
-
-
-#I should indeed keep also the isoform I0 for downstream analysis
 Lngf                        <- ngfGRS[selNGF,]
-export.gff(Lngf,con="/home/rluisier/data/Riccio/Exp_1/Dec2016/utrid/APA_stringent/Lngf.gtf",format="gtf")#50'080
-
+export.gff(Lngf,con="./annotation/rn5/Lngf.gtf",format="gtf")
 
 #Remove the duplicates
 RemoveIds <- function(gr){
@@ -209,65 +170,71 @@ RemoveIds <- function(gr){
 
 Lngf <- RemoveIds(Lngf)
 
-export.gff(Lngf,con="/home/rluisier/data/Riccio/Exp_1/Dec2016/utrid/APA_stringent/Lngfp.gtf",format="gtf")#PLease note that this version does not contain those 3' end that do not overlap with a polyA site however without duplicates
 
-#is.expressed.iso --> must be expressed in both samples
-allGS                       <- as.character(mcols(e75p)$X.gene_name.)
-allTX                       <- as.character(mcols(e75p)$X.transcript_id.)
-myselG                      <- myselG[match(Ltot$uniqueID,rownames(myselG)),]
-myCov500                    <- myCov500[match(Ltot$uniqueID,rownames(myCov500)),]
-is.expressed.iso            <- is.expressed.iso[match(Ltot$uniqueID,rownames(is.expressed.iso)),]
+# F. Create matrix containing annotation of the isoforms together with coverage -- anno_ngf
+myOut           <- myCov500[match(Lngf$ID,rownames(myCov500)),]
+ngfGRS          <- Lngf
 
-groups                      <- factor(paste(info$treatment[info$type=="raw"],info$origin[info$type=="raw"],sep="."))
-colnames(myselG)            <- paste(unlist(lapply(colnames(myselG),function(x)return(gsub(x,pattern=".raw",repl="")))),"isexpressed",sep=".")
-colnames(is.expressed.iso)  <- unlist(lapply(colnames(is.expressed.iso),function(x)paste(x,"is.expressed.iso",sep=".")))
-
-txID                        <- unlist(lapply(rownames(myselG),function(x)return(unlist(strsplit(x,split="\\."))[1])))
-GS                          <- allGS[match(txID,allTX)]
-temp                        <- apply(is.expressed.iso,2,function(X)return(tapply(X,INDEX=factor(txID),FUN=function(z)return(sum(z)>0))))
-is.expressed.txID           <- temp[match(txID,rownames(temp)),]
-temp                        <- apply(is.expressed.iso,2,function(X)return(tapply(X,INDEX=factor(GS),FUN=function(z)return(sum(z)>0))))
-is.expressed.GS             <- temp[match(GS,rownames(temp)),]
-
-colnames(is.expressed.txID) <- unlist(lapply(colnames(is.expressed.txID),function(x)return(gsub(x,pattern="iso",repl="txID"))))
-colnames(is.expressed.GS)   <- unlist(lapply(colnames(is.expressed.GS),function(x)return(gsub(x,pattern="iso",repl="GS"))))
-
-rownames(is.expressed.txID) <- rownames(myselG)
-rownames(is.expressed.iso)  <- rownames(myselG)
-rownames(is.expressed.GS)   <- rownames(myselG)
-
-is.expressed.iso            <- data.frame(is.expressed.iso)
-is.expressed.txID           <- data.frame(is.expressed.txID)
-is.expressed.GS             <- data.frame(is.expressed.GS)
+### Nested Functions
+DeltaLp <- function(gr){
+  ix       <- match(as.character(gr$txID),as.character(mcols(g3utr)$X.transcript_id.))
+  Lnew     <- width(gr)
+  goi      <- g3utr[ix]
+  
+  # Remove introns from length of init 3'UTR
+  over                         <-  as.matrix(findOverlaps(query=g3introns,subject=goi,ignore.strand=FALSE))
+  torm                         <-  tapply(width(pintersect(g3introns[over[,1]],goi[over[,2]])),INDEX=as.factor(over[,2]),FUN=sum)
+  Lutr                         <-  width(goi)
+  Lutr[as.numeric(names(torm))]<-  Lutr[as.numeric(names(torm))]-torm
+  
+  
+  # Remove introns from length of final 3'UTR
+  over                         <-  as.matrix(findOverlaps(query=g3introns,subject=gr,ignore.strand=FALSE))
+  torm                         <-  tapply(width(pintersect(g3introns[over[,1]],gr[over[,2]])),INDEX=as.factor(over[,2]),FUN=sum)
+  Lnew                         <-  width(gr)
+  Lnew[as.numeric(names(torm))]<-  Lnew[as.numeric(names(torm))]-torm
+  
+  # Compute difference in length
+  dL                           <-  Lnew-Lutr
+  return(dL)
+}
 
 
+ComputeWidth <- function(gr){
+  
+  Lnew                         <- width(gr)
+  # Remove introns from length of final 3'UTR
+  over                         <-  as.matrix(findOverlaps(query=g3introns,subject=gr,ignore.strand=FALSE))
+  torm                         <-  tapply(width(pintersect(g3introns[over[,1]],gr[over[,2]])),INDEX=as.factor(over[,2]),FUN=sum)
+  #?keep when the end of the 3'utr is in the middle of the introns
+  
+  # Correct for introns
+  Lnew[as.numeric(names(torm))]<-  Lnew[as.numeric(names(torm))]-torm
+  
+  return(Lnew)
+}
+
+ComputeWidthTx <- function(gr){
+  
+  Lnew     <- width(gr)
+  # Remove introns from length
+  over                         <-  as.matrix(findOverlaps(query=gintrons,subject=gr,ignore.strand=FALSE))
+  torm                         <-  tapply(width(pintersect(gintrons[over[,1]],gr[over[,2]])),INDEX=as.factor(over[,2]),FUN=sum)
+  Lnew                         <-  width(gr)
+  Lnew[as.numeric(names(torm))]<-  Lnew[as.numeric(names(torm))]-torm
+  
+  return(Lnew)
+}
+#
+#
+###
 
 
-# F. Create single matrix
-myOut   <- data.frame(tot.detect,myCov500,myselG)
-
-
-load("/home/rluisier/data/Riccio/Exp_1/Dec2016/Coverage/utrCov_stringent/myCov_March_12_2016_500.RData")
-myOut   <- myOut[myOut$detect.iso.ngf!="no"|c(1:nrow(myOut))%in%grep(rownames(myOut),pattern="\\.0"),]
-myOut   <- myOut[rownames(myOut)%in%ngfGRS$uniqueID,]
-ngfGRS  <- ngfGRS[match(rownames(myOut),ngfGRS$ID),]
-outdir <- "/home/rluisier/data/Riccio/Exp_1/Dec2016/utrid/anno_ngf_stringent/"
-
-
-ngfGRS         <- import.gff("/home/rluisier/data/Riccio/Exp_1/Dec2016/utrid/APA_stringent/Lngf.gtf",format="gtf",asRangedData=FALSE)#Takes the one with the replicates
-load("/home/rluisier/data/Riccio/Exp_1/Dec2016/Coverage/utrCov_stringent/myCov_March_12_2016_500.RData")
-myOut   <- myOut[myOut$detect.iso.ngf!="no"|c(1:nrow(myOut))%in%grep(rownames(myOut),pattern="\\.0"),]
-myOut   <- myOut[rownames(myOut)%in%ngfGRS$uniqueID,]
-ngfGRS  <- ngfGRS[match(rownames(myOut),ngfGRS$ID),]
-outdir <- "/home/rluisier/data/Riccio/Exp_1/Dec2016/utrid/anno_ngf_stringent/"
 
 #I should remove from here all the isoforms for which utrL<=10
-torm   <- which(width(ngfGRS)<=10)
-ngfGRS <- ngfGRS[-torm,]
-myOut  <- myOut[-torm,]
-#
-# 1. Create basis of anno_ngf
-#
+tokeep   <- width(ngfGRS)>10
+ngfGRS   <- ngfGRS[tokeep,]
+myOut    <- myOut[tokeep,]
 
 #Is conservative
 is.conservative           <- ngfGRS$isoform==0
@@ -402,19 +369,6 @@ anno_ngf                             <- data.frame(anno_ngf,distonext)
 iso_cons                    <- rep(NA,nrow(anno_ngf))
 names(iso_cons)             <- anno_ngf$uniqueID
 
-#
-# Check that the super-short are less than 122 nt
-#
-require(mclust)
-BINS1          <- cut(anno_ngf$newL,breaks=quantile(anno_ngf$newL,prob=seq(from=0,to=1.0,by=0.1),na.rm=T),include.lowest=T)
-BINS2          <- cut(log10(anno_ngf$newL),breaks=quantile(log10(anno_ngf$newL),prob=seq(from=0,to=1.0,by=0.1),na.rm=T),include.lowest=T)
-BINS3          <- cut(log10(anno_ngf$newL),breaks=c(1,1.5,2,2.25,2.75,3.25,3.75,4.25),include.lowest=T)
-mydist1        <- tapply(anno_ngf$distonext,INDEX=BINS1,function(x)return(log10(x[!is.na(x)])))
-mydist2        <- tapply(anno_ngf$distonext,INDEX=BINS2,function(x)return(log10(x[!is.na(x)])))
-mydist3        <- tapply(anno_ngf$distonext,INDEX=BINS3,function(x)return(log10(x[!is.na(x)])))
-mydist4        <- tapply(anno_ngf$distonext,INDEX=factor(anno_ngf$iso_ordered,levels=as.character(c(1,2,3,4,5,6))),function(x)return(log10(x[!is.na(x)])))
-
-Dist_to_Next        <- log10(anno_ngf$distonext[!is.na(anno_ngf$distonext)])
 
 
 myutrsize <- tapply(anno_ngf$newL[anno_ngf$no.iso>2],INDEX=factor(anno_ngf$iso_ordered[anno_ngf$no.iso>2],levels=as.character(c(1,2,3,4,5,6))),function(x)return(log10(x[!is.na(x)&x>10])))
@@ -845,7 +799,6 @@ anno_ngf$selected.for.distance  <- anno_ngf$uniqueID%in%selected
 
 
 save(list=c("anno_ngf","ngfGRS"),file="/home/rluisier/data/Riccio/Exp_1/Dec2016/utrid/anno_ngf_stringent/anno_ngf_March_12.RData")
-#save(list=c("anno_ngf","ngfGRS"),file="/home/rluisier/data/Riccio/Exp_1/Dec2016/utrid/anno_ngf_stringent/anno_ngf_Feb_02.RData")
 
 ngfGRS <- ngfGRS[which(ngfGRS$uniqueID%in%anno_ngf$uniqueID[anno_ngf$selected.for.distance]),]
 export.gff(object=ngfGRS,con="/home/rluisier/data/Riccio/Exp_1/Dec2016/utrid/APA_stringent/Lngf_sub.gtf",format="gtf")
