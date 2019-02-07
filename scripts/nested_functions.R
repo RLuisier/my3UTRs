@@ -1,4 +1,388 @@
 ### NESTED FUNCTIONS
+StudyFrequencyPAS <- function(utrGR=focusGR,utrAnno=focusAnno,target=myGRpaf){
+  # a) Find overlap
+  gOver               <- findOverlaps(query=target,subject=utrGR,ignore.strand=F)
+  idxU                <- queryHits(gOver)
+  idxG                <- subjectHits(gOver)
+  # b) Compute frequency
+  Lev                    <- c("-1","0","1","2","3","4")
+  subAnno                <- utrAnno[unique(idxG),]
+  all                    <- unlist(lapply(Lev,function(x)return(sum(as.character(utrAnno$iso_cons_merged)[utrAnno$detect.iso.ngf!="no"]==x,na.rm=T))))
+  all                    <- c(sum(utrAnno$detect.iso.ngf[utrAnno$is.conservative]!="no"),all)
+  names(all)             <- c("conservative",Lev)
+  
+  indb                   <- unlist(lapply(Lev,function(x)return(sum(as.character(subAnno$iso_cons_merged)[subAnno$detect.iso.ngf!="no"]==x,na.rm=T))))
+  indb                   <- c(sum(subAnno$detect.txID.ngf[subAnno$is.conservative]!="no"),indb)
+  names(indb)            <- c("conservative",Lev)
+  
+  # c) Create output
+  out                     <- data.frame(all=all,indb=indb,freq=indb/all)
+  return(out)
+}
+
+
+StudyFrequencyPAS_v2 <- function(utrGR=focusGR,utrAnno=focusAnno,target=myGRpaf,version="all"){
+  
+  if(version=="all"){
+    print("no modif required")
+  }
+  if(version=="conservative"){
+    utrGR   <- utrGR[utrAnno$is.conservative,]
+    utrAnno <- utrAnno[utrAnno$is.conservative,]
+  }
+  if(version=="new"){
+    utrGR   <- utrGR[!utrAnno$is.conservative,]
+    utrAnno <- utrAnno[!utrAnno$is.conservative,]
+  }
+  
+  # a) Find overlap
+  gOver               <- findOverlaps(query=target,subject=utrGR,ignore.strand=F)
+  idxU                <- queryHits(gOver)
+  idxG                <- subjectHits(gOver)
+  subAnno             <- utrAnno[unique(idxG),]
+  
+  #b) Compute frequency per bin of length
+  #BINS2               <- cut(log10(utrAnno$newL),breaks=quantile(log10(utrAnno$newL),prob=seq(from=0,to=1.0,by=0.1),na.rm=T),include.lowest=T)
+  BINS1                <- cut(log10(utrAnno$newL),breaks=c(1,1.5,2,2.25,2.75,3.25,3.75,4.25),include.lowest=T)
+  BINS2               <- cut(log10(subAnno$newL),breaks=c(1,1.5,2,2.25,2.75,3.25,3.75,4.25),include.lowest=T)
+  Lev                  <- levels(BINS)
+  
+  all                 <- as.vector(table(BINS1))
+  all                 <- c(sum(utrAnno$is.conservative),all)
+  names(all)          <- c("conservative",Lev)
+  
+  indb                <- as.vector(table(BINS2))
+  indb                <- c(sum(subAnno$is.conservative),indb)
+  names(indb)         <- c("conservative",Lev)
+  
+  # c) Create output
+  out                 <- data.frame(all=all,indb=indb,freq=indb/all)
+  return(out)
+}
+
+
+
+StudyNumberPAS <- function(utrGR=focusGR,utrAnno=focusAnno,target=myPA[[1]]){
+  
+  Lev                    <- c("-1","0","1","2","3","4")
+  sel1                   <- utrAnno$detect.iso.ngf!="no"
+  mysel                  <- lapply(Lev,function(x){
+    temp<-as.character(utrAnno$iso_cons_merged)==x
+    temp[is.na(temp)]<-FALSE
+    return(temp)})
+  myListUTR              <- unlist(lapply(c(1:length(mysel)),function(x)return(utrGR[sel1&mysel[[x]],])))
+  
+  # Compute number of sites per category
+  GetNumberSites <- function(subUTR=myListUTR[[1]]){
+    myHits      <- subjectHits(findOverlaps(query=target,subject=subUTR,ignore.strand=F))
+    no.missing  <- sum(!c(1:length(subUTR))%in%unique(myHits))
+    out         <- as.data.frame(table(table(myHits)))#get number of sites per isoform
+    temp        <- sum(as.numeric(as.character(out$Var1))*as.numeric(as.character(out$Freq)))/(no.missing+sum(as.numeric(as.character(out$Freq))))
+    Out         <- c(rep(0,no.missing),do.call(lapply(c(1:nrow(out)),function(x)return(rep(out$Var1[x],out$Freq[x]))),what=c))
+    
+    return(list(temp,Out))
+  }
+  
+  no.sites    <-  lapply(myListUTR,GetNumberSites)
+  
+  
+  my.all.sites <- lapply(c(1:length(no.sites)),function(x)return(no.sites[[x]][[2]]))
+  my.all.sites[[length(my.all.sites)+1]] <- GetNumberSites(utrGR[sel1&utrAnno$is.conservative,])[[2]]
+  my.all.sites <- my.all.sites[c(7,c(1:6))]
+  names(my.all.sites)<- c("conservative",Lev)
+  
+  my.no.with.sites <- rbind(unlist(lapply(my.all.sites,function(x)return(sum(x!=0)))),
+                            unlist(lapply(my.all.sites,function(x)return(length(x))))
+  )
+  
+  rownames(my.no.with.sites)<- c("with sites", "tot")
+  
+  out          <- unlist(lapply(c(1:length(no.sites)),function(x)return(no.sites[[x]][[1]])))
+  out          <- c(GetNumberSites(utrGR[sel1&utrAnno$is.conservative,])[[1]],out)
+  names(out)   <-c("conservative",Lev)
+  
+  return(list(out,my.all.sites,my.no.with.sites))
+}
+
+
+
+StudyNumberPASPerLength <- function(utrGR=focusGR,utrAnno=focusAnno,target=myPA[[1]],Lev=BINS1){
+  
+  sel1                   <- utrAnno$detect.iso.ngf!="no"
+  mysel                  <- lapply(Lev,function(x){
+    temp             <-as.character(utrAnno$iso_cons_merged)==x
+    temp[is.na(temp)]<-FALSE
+    return(temp)
+  }
+  )
+  
+  myListUTR              <- unlist(lapply(c(1:length(mysel)),function(x)return(utrGR[sel1&mysel[[x]],])))
+  
+  # Compute number of sites per category
+  GetNumberSites <- function(subUTR=myListUTR[[1]]){
+    myHits      <- subjectHits(findOverlaps(query=target,subject=subUTR,ignore.strand=F))
+    no.missing  <- sum(!c(1:length(subUTR))%in%unique(myHits))
+    out         <- as.data.frame(table(table(myHits)))#get number of sites per isoform
+    
+    temp       <- sum(as.numeric(as.character(out$Var1))*as.numeric(as.character(out$Freq)))/(no.missing+sum(as.numeric(as.character(out$Freq))))
+    
+    Out <- c(rep(0,no.missing),do.call(lapply(c(1:nrow(out)),function(x)return(rep(out$Var1[x],out$Freq[x]))),what=c))
+    
+    return(list(temp,Out))
+  }
+  
+  no.sites    <-  lapply(myListUTR,GetNumberSites)
+  
+  
+  my.all.sites <- lapply(c(1:length(no.sites)),function(x)return(no.sites[[x]][[2]]))
+  my.all.sites[[length(my.all.sites)+1]] <- GetNumberSites(utrGR[sel1&utrAnno$is.conservative,])[[2]]
+  my.all.sites <- my.all.sites[c(7,c(1:6))]
+  names(my.all.sites)<- c("conservative",Lev)
+  
+  my.no.with.sites <- rbind(unlist(lapply(my.all.sites,function(x)return(sum(x!=0)))),
+                            unlist(lapply(my.all.sites,function(x)return(length(x))))
+  )
+  
+  rownames(my.no.with.sites)<- c("with sites", "tot")
+  
+  out          <- unlist(lapply(c(1:length(no.sites)),function(x)return(no.sites[[x]][[1]])))
+  out          <- c(GetNumberSites(utrGR[sel1&utrAnno$is.conservative,])[[1]],out)
+  names(out)   <-c("conservative",Lev)
+  
+  return(list(out,my.all.sites,my.no.with.sites))
+}
+
+StudyNumberPAS_v2 <- function(utrGR=focusGR,utrAnno=focusAnno,target=myPA[[1]],version="all"){
+  
+  if(version=="all"){
+    print("no modif required")
+  }
+  if(version=="conservative"){
+    utrGR   <- utrGR[utrAnno$is.conservative,]
+    utrAnno <- utrAnno[utrAnno$is.conservative,]
+  }
+  if(version=="new"){
+    utrGR   <- utrGR[!utrAnno$is.conservative,]
+    utrAnno <- utrAnno[!utrAnno$is.conservative,]
+  }
+  
+  BINS1                <- cut(log10(utrAnno$newL),breaks=c(1,1.5,2,2.25,2.75,3.25,3.75,4.25),include.lowest=T)
+  print("debug1")
+  Lev                  <- levels(BINS1)
+  print("debug2")
+  myListUTR            <- tapply(c(1:length(utrGR)),INDEX=BINS1,FUN=function(x)return(utrGR[x]))
+  print("debug3")
+  print(length(myListUTR))
+  
+  # Compute number of sites per category
+  GetNumberSites <- function(subUTR=myListUTR[[1]]){
+    if(length(subUTR)>10){
+      myHits      <- subjectHits(findOverlaps(query=target,subject=subUTR,ignore.strand=F))
+      print("debug4")
+      no.missing  <- sum(!c(1:length(subUTR))%in%unique(myHits))
+      print("debug5")
+      if(length(myHits)==0){
+        out         <- rep(0,length(subUTR))
+        Out         <- rep(0,no.missing)
+      }
+      
+      
+      
+      if(length(myHits>0)){
+        out         <- as.data.frame(table(table(myHits)))#get number of sites per isoform
+        print("debug6")
+        temp       <- mean(c(as.data.frame(table(myHits))$Freq,rep(0,no.missing)))#Average number of PAS per isofor
+        print("debug7")
+        Out        <- c(rep(0,no.missing),do.call(lapply(c(1:nrow(out)),function(x)return(rep(out$Var1[x],out$Freq[x]))),what=c))#Total number of motifs
+      }
+    }
+    else{
+      temp=NA
+      Out=NA
+    }
+    return(list(temp,Out))
+  }
+  
+  no.sites                                <-  lapply(myListUTR,GetNumberSites)
+  
+  
+  my.all.sites                            <- lapply(c(1:length(no.sites)),function(x)return(no.sites[[x]][[2]]))
+  my.all.sites[[length(my.all.sites)+1]]  <- GetNumberSites(utrGR[utrAnno$is.conservative,])[[2]]
+  my.all.sites                            <- my.all.sites[c((length(Lev)+1),c(1:length(Lev)))]
+  names(my.all.sites)                     <- c("conservative",Lev)
+  
+  my.no.with.sites                       <- rbind(unlist(lapply(my.all.sites,function(x)return(sum(x!=0)))),
+                                                  unlist(lapply(my.all.sites,function(x)return(length(x))))
+  )
+  
+  rownames(my.no.with.sites)<- c("with sites", "tot")
+  
+  out          <- unlist(lapply(c(1:length(no.sites)),function(x)return(no.sites[[x]][[1]])))
+  out          <- c(GetNumberSites(utrGR[utrAnno$is.conservative,])[[1]],out)#Average number of PAS per isoform
+  names(out)   <-c("conservative",Lev)
+  
+  return(list(out,my.all.sites,my.no.with.sites))
+}
+
+
+#This one needs corrections as performed with the motif analysis
+GetZScore <- function(){
+  
+  # A. FG
+  #1/ Sum over all uniqueID
+  mysumid <- tapply(myfc[,3],INDEX=as.factor(as.character(myfc[,5])),FUN=sum)
+  mysumid <- data.frame(ID=rownames(mysumid),iso=anno_ngf$iso_cons[match(rownames(mysumid),as.character(anno_ngf$uniqueID))],val=as.vector(mysumid))
+  #2/ Group by iso_cons
+  if(withsum){fgcg      <- tapply(mysumid$val,INDEX=as.factor(mysumid$iso),FUN=sum)}
+  if(!withsum){fgcg     <- tapply(mysumid$val,INDEX=as.factor(mysumid$iso),FUN=mean)}
+  scorec                <- fgcg[match(c("-1","0","1","2","3"),names(fgcg))]
+  
+  # B. BG
+  #shuffle labels 500 times and compute global score
+  myscoreg  <- list()
+  myscorec  <- list()
+  
+  # Create matrix of randomised index/labels: when I shuffle the iso_cons, I need to shuffle the uniqueID together otherwise the same txID will be find in several places; donc randomisation en pair.
+  #1/ Reshuffle the labels
+  myIdx <- matrix(NA,nrow=nrow(mysumid),ncol=500)
+  for(k in c(1:500)){
+    myIdx[,k]<- sample(as.character(mysumid$iso))
+  }
+  #2/ Sum over all the labels
+  for(j in c(1:500)){
+    if(withsum){myscoreg[[j]]   <- tapply(mysumid$val,INDEX=as.factor(myIdx[,j]),FUN=sum)}
+    if(!withsum){myscoreg[[j]]  <- tapply(mysumid$val,INDEX=as.factor(myIdx[,j]),FUN=mean)}
+    myscoreg[[j]]               <- myscoreg[[j]][match(c("-1","0","1","2","3"),names(myscoreg[[j]]))]
+  }
+  
+  
+  myscorec  <-  do.call(myscoreg,what=rbind)
+  
+  mymbg      <- apply(myscorec,2,mean)
+  msdbg      <- apply(myscorec,2,sd)
+  zval       <- (scorec-mymbg)/msdbg
+  
+  pval.more  <- vector(length=length(zval))
+  pval.less  <- vector(length=length(zval))
+  for(i in c(1:ncol(myscorec))){
+    pval.more[i]<- sum(myscorec[,i]>scorec[i])/length(myscorec[,i])
+    pval.less[i]<- sum(myscorec[,i]<scorec[i])/length(myscorec[,i])
+  }
+  
+  log.p.more <- -log10(pval.more+0.001)
+  log.p.less <- -log10(pval.less+0.001)
+  log.p.tot  <- log.p.more
+  log.p.tot[abs(log.p.more)<abs(log.p.less)]<- -log.p.less[abs(log.p.more)<abs(log.p.less)]
+  
+}
+
+GetZScore_v2 <- function(){
+  # A. FG
+  #1/ Sum over all uniqueID
+  mysumid <- tapply(myfc[,3],INDEX=as.factor(as.character(myfc[,5])),FUN=sum)
+  mysumid <- data.frame(ID=rownames(mysumid),iso=anno_ngf$iso_cons[match(rownames(mysumid),as.character(anno_ngf$uniqueID))],val=as.vector(mysumid))
+  #2/ Group by iso_cons
+  if(withsum){fgcg      <- tapply(mysumid$val,INDEX=as.factor(mysumid$iso),FUN=sum)}
+  if(!withsum){fgcg     <- tapply(mysumid$val,INDEX=as.factor(mysumid$iso),FUN=mean)}
+  scorec                <- fgcg[match(c("-1","0","1","2","3"),names(fgcg))]
+  
+  # B. BG
+  #shuffle labels 500 times and compute global score
+  myscoreg  <- list()
+  myscorec  <- list()
+  
+  # Create matrix of randomised index/labels: when I shuffle the iso_cons, I need to shuffle the uniqueID together otherwise the same txID will be find in several places; donc randomisation en pair.
+  #1/ Reshuffle the labels
+  myIdx <- matrix(NA,nrow=nrow(mysumid),ncol=500)
+  for(k in c(1:500)){
+    myIdx[,k]<- sample(as.character(mysumid$iso))
+  }
+  #2/ Sum over all the labels
+  for(j in c(1:500)){
+    if(withsum){myscoreg[[j]]   <- tapply(mysumid$val,INDEX=as.factor(myIdx[,j]),FUN=sum)}
+    if(!withsum){myscoreg[[j]]  <- tapply(mysumid$val,INDEX=as.factor(myIdx[,j]),FUN=mean)}
+    myscoreg[[j]]               <- myscoreg[[j]][match(c("-1","0","1","2","3"),names(myscoreg[[j]]))]
+  }
+  
+  
+  myscorec  <-  do.call(myscoreg,what=rbind)
+  
+  mymbg      <- apply(myscorec,2,mean)
+  msdbg      <- apply(myscorec,2,sd)
+  zval       <- (scorec-mymbg)/msdbg
+  
+  pval.more  <- vector(length=length(zval))
+  pval.less  <- vector(length=length(zval))
+  for(i in c(1:ncol(myscorec))){
+    pval.more[i]<- sum(myscorec[,i]>scorec[i])/length(myscorec[,i])
+    pval.less[i]<- sum(myscorec[,i]<scorec[i])/length(myscorec[,i])
+  }
+  
+  log.p.more <- -log10(pval.more+0.001)
+  log.p.less <- -log10(pval.less+0.001)
+  log.p.tot  <- log.p.more
+  log.p.tot[abs(log.p.more)<abs(log.p.less)]<- -log.p.less[abs(log.p.more)<abs(log.p.less)]
+  
+}
+
+MyTestFrac <- function(n1,n2,p1,p2){
+  p  <- (p1*n1+p2*n2)/(n1+n2)
+  SE <- sqrt(p*(1-p)*(1/n1+1/n2))
+  Z  <- (p1-p2)/SE
+  PVal<- 2*pnorm(-abs(Z))#2sided
+  return(list(Z,PVal))
+}
+
+
+error.bar <- function(x, y, upper, lower=upper, length=0.1,...){
+  if(length(x) != length(y) | length(y) !=length(lower) | length(lower) != length(upper))
+    stop("vectors must be same length")
+  arrows(x,y+upper, x, y-lower, angle=90, code=3, length=length, ...)
+}
+
+
+
+#THIS MUST BE MODIFIED
+ComputeEnrichmentPAS <- function(ID=unique(as.character(mydat[,5])),withsum=TRUE,Nrand=500,PLOT=TRUE,BG=anno_tot$uniqueID[anno_tot$isoform=="0"]){
+  
+  ID <- ID[!is.na(ID)]
+  ix <- match(ID,rownames(mysumpost))
+  # A. FG
+  #1/ Group by iso_cons
+  if(withsum){fgcg       <- apply(mysumpost[ix,],2,FUN=sum)}
+  if(!withsum){fgcg      <- apply(mysumpost[ix,],2,FUN=mean)}
+  
+  # B. BG
+  #Pick labels 500 times and compute global score
+  if(withsum){
+    myscorec       <- do.call(what=rbind,
+                              args=lapply(c(1:Nrand),FUN=function(Z)return(apply(mysumpost[match(sample(x=BG,size=length(ID)),rownames(mysumpost)),],2,FUN=sum))))
+  }
+  
+  
+  if(!withsum){
+    myscorec       <- do.call(what=rbind,
+                              args=lapply(c(1:Nrand),FUN=function(Z)return(apply(mysumpost[match(sample(x=BG,size=length(ID)),rownames(mysumpost)),],2,FUN=mean))))
+  }
+  
+  scorec     <-  fgcg
+  mymbg      <- apply(myscorec,2,mean)
+  msdbg      <- apply(myscorec,2,sd)
+  zval       <- (fgcg-mymbg)/msdbg
+  
+  pval.more  <- vector(length=length(zval))
+  pval.less  <- vector(length=length(zval))
+  for(i in c(1:ncol(myscorec))){
+    pval.more[i]<- sum(myscorec[,i]>scorec[i])/length(myscorec[,i])
+    pval.less[i]<- sum(myscorec[,i]<scorec[i])/length(myscorec[,i])
+  }
+  
+  log.p.more <- -log10(pval.more+0.001)
+  log.p.less <- -log10(pval.less+0.001)
+  log.p.tot  <- log.p.more
+  log.p.tot[abs(log.p.more)<abs(log.p.less)]<- -log.p.less[abs(log.p.more)<abs(log.p.less)]
+  
+}
 
 GetOI <- function(mygoID="GO:0006412",sampleGO){
   go.genes    <- genesInTerm(sampleGO, mygoID)[[1]]#To extract all genes related to this term
@@ -300,4 +684,9 @@ PlotFractionValidated <- function(siteoi=polya_db,name="polyAdb"){
   mtext(side=2,line=2,cex=0.7,text=paste("% validated by ",name))
 }
 
+
+lappend <- function (lst, ...){
+  lst <- c(lst, list(...))
+  return(lst)
+}
 ###
