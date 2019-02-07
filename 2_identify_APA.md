@@ -15,7 +15,6 @@ do
     cat ./SAMPLES.txt  | while read SAMPLE
     do
         BAM=${BAMDIR}/{SAMPLE}.bam
-        SCRIPT=
         ./scripts/extractCovGrossSegments.R ${BAM} ${OUTDIR} ${CHR} ${SAMPLE} ${GROSSEG} ${WITHCOR} ${PAIRS} ${FRAC} ${PROTOCOL}
     done
 done
