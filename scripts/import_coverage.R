@@ -4,10 +4,11 @@ library(IRanges)
 library(GenomicRanges)
 library(rtracklayer)
 
+rm(list=ls())
 
 # A. Load data
 load("./annotation/rn5/GRanges_comprehensive_transcriptome_rat_24_nov_2015.RData")
-ngfGRS         <- import.gff("./annotation//L2.gtf",format="gtf",asRangedData=FALSE)
+ngfGRS         <- import.gff("./utrid/APA/L2.gtf",format="gtf")
 covdir         <- "./Coverage/utrCov"
 
 # B. Import coverage
@@ -49,6 +50,10 @@ id                      <- match(as.character(ngfGRS$uniqueID),rownames(myCov500
 ngfGRS                  <- ngfGRS[!is.na(id),]
 id                      <- match(as.character(ngfGRS$uniqueID),rownames(myCov500))
 myCov500                <- myCov500[id,]
+
+write.csv(x=myCov500,file="./data/myCov500.csv")
+
+
 
 
 
