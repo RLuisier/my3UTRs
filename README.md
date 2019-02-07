@@ -1,11 +1,21 @@
 # my3UTRs
+
+## Overview
 This repository contains all scripts related to the manuscript [3′UTR cleavage of transcripts localized in axons of sympathetic neurons](https://www.biorxiv.org/content/10.1101/170100v2) which includes the custom pipeline that re-annotates and quantifies 3' end alternative transcripts using RNA-seq data together with down-stream analysis. It is organised as follows:
 
-### A. Bioinformatic pipeline to identify alternative 3' ends from 3'end-seq data
+### A. Bioinformatic pipeline to identify alternative 3' ends from 3'end-seq data #head1
 This comprises both the identification of the longest 3' UTR expressed per Ensembl transcript ID as described in file [1_identify_gross_fragments.md](./1_identify_gross_fragments.md), as well as the identification of alternative 3' end as described in file [2_identify_APA.md](./2_identify_APA.md). The output ([L2.gtf](./utrid/APA/L2.gtf)) is a gtf file of alternative 3' UTR isoforms as identified by the pipeline.
 
 ### B. Downstream analysis of 3' UTR isoform expression in cell body and distal axons
 The down-stream analysis includes 1) the quantification of the expression of each alternative 3' UTR isoform in each of the samples, 2) differential 3’UTR isoforms expression analysis; 3) Gene Ontology enrichment analysis. These steps are described in file [3_analysis_3UTR_isoforms.md](./3_analysis_3UTR_isoforms.md).
+
+## Repo Contents
+* [GOenrichment](./GOenrichment): folder containing the unfiltered and filtered results of the GO enrichment analyses
+* [annotation](./annotation): all annotation files required to run the codes.
+* [data](./data): data count tables
+* [differential_expression](./differential_expression): result of the differential 3' UTR expression analysis
+* [Scripts](./scripts): `R`, `Python` and `Bash` custome code
+* [utrid](./utrid): output of the pipeline that reannotates 3' UTR.
 
 ## Samples description
 mRNA was obtained in duplicates from either cell body or distal axons of rat sympathetic neurons which distal compartment has been exposed to NGF. In this model system, distal axons are separated from the cell bodies by a 1 mm wide Teflon divider, allowing the isolation of mRNA from distinct cellular compartments. Prior to sequencing, mRNA was subjected to two rounds of linear amplification, which similarly to Poly(A)-Seq
@@ -13,7 +23,10 @@ mRNA was obtained in duplicates from either cell body or distal axons of rat sym
 
 
 ## Dependencies
-TopHat2, BEDTools suite, R
+TopHat2, BEDTools suite, R (tested on R-3.0.2), Python (tested on Python 2.6.6), Cython, Samtools (tested on samtools-1.2). The following packages should be installed:
+```R
+install.packages(c('grDevices','Rsamtools','IRanges','GenomicRanges','rtracklayer','gplots','EBS','Segmentor3IsBack','GO.db','limma','topGO','biomaRt','org.Rn.eg.db','geneplotter','multtest','mclust'))
+```
 
 ## Project inventory
 
