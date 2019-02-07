@@ -55,3 +55,5 @@ Described in file [import_coverage.R](./scripts/import_coverage.R), the outputs 
 
 
 4. Characterise the output of the pipeline
+
+In terms of number of newly identified 3' UTR isoforms, comparison with compiled atlas of 3' end , PAS content. Described in file [characterise_output_pipeline.R](./scripts/characterise_output_pipeline.R).
