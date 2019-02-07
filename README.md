@@ -5,7 +5,7 @@ This repository contains all scripts related to the manuscript [3′UTR cleavage
 This comprises both the identification of the longest 3' UTR expressed per Ensembl transcript ID as described in file [1_identify_gross_fragments.md](./1_identify_gross_fragments.md), as well as the identification of alternative 3' end as described in file [2_identify_APA.md](./2_identify_APA.md). The output ([L2.gtf](./utrid/APA/L2.gtf)) is a gtf file of alternative 3' UTR isoforms as identified by the pipeline.
 
 ### B. Downstream analysis of 3' UTR isoform expression in cell body and distal axons
-The down-stream analysis includes 1) the quantification of the expression of each alternative 3' UTR isoform in each of the samples, 2) differential 3’UTR isoforms expression analysis; 3) Gene Ontology enrichment analysis.
+The down-stream analysis includes 1) the quantification of the expression of each alternative 3' UTR isoform in each of the samples, 2) differential 3’UTR isoforms expression analysis; 3) Gene Ontology enrichment analysis. These steps are described in file [3_analysis_3UTR_isoforms.md](./3_analysis_3UTR_isoforms.md).
 
 ## Samples description
 mRNA was obtained in duplicates from either cell body or distal axons of rat sympathetic neurons which distal compartment has been exposed to NGF. In this model system, distal axons are separated from the cell bodies by a 1 mm wide Teflon divider, allowing the isolation of mRNA from distinct cellular compartments. Prior to sequencing, mRNA was subjected to two rounds of linear amplification, which similarly to Poly(A)-Seq
