@@ -49,7 +49,7 @@ done
 
 Described in file [import_coverage.R](./scripts/import_coverage.R), the outputs are the following:
   * [myCov500](./data/myCov500.tab) the raw count table.
-  * [anno_ngf](./data/anno_ngf.tab)
+  * [anno_ngf](./data/anno_ngf.tab) a table containing both the raw counts together with additional information about the 3' UTR isoforms.
   * [Lngf.gtf](./annotation/rn5/Lngf.gtf) the gtf file of the 3' UTR isoforms covered by at least 10 reads.
   * [Lngf_sub.gtf](./annotation/rn5/Lngf_sub.gtf) the same as Lngf.gtf however where 3'UTR which are within 500nt of each other are filtered out, keeping the longest 3' UTR isoform. Furthermore isoforms of length smaller than 10 nt were remove.
 
